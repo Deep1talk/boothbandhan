@@ -1,6 +1,7 @@
 import RoleDashboardShell from "@/components/shared/layout/RoleDashboardShell";
 import {
   LEADER_DASHBOARD,
+  LEADER_GREETINGS,
   LEADER_HELP_DESK,
   LEADER_PROFILE,
 } from "@/routes/leaderpanelRoutes";
@@ -14,14 +15,17 @@ export default function LeaderDashboardLayoutShell({ session, children }) {
       profileHref={LEADER_PROFILE}
       navigation={[
         { label: "Overview", href: LEADER_DASHBOARD, icon: "overview" },
+        { label: "Greeting Template", href: LEADER_GREETINGS, icon: "poster" },
         { label: "Help Desk", href: LEADER_HELP_DESK, icon: "helpDesk" },
         { label: "Profile", href: LEADER_PROFILE, icon: "user" },
       ]}
       mobileNavigation={[
         { label: "Overview", href: LEADER_DASHBOARD, icon: "overview" },
+        { label: "Greeting Template", href: LEADER_GREETINGS, icon: "poster" },
         { label: "Help Desk", href: LEADER_HELP_DESK, icon: "helpDesk" },
       ]}
       mobileFullWidthTopSections
+      notificationAccent="emerald"
       sidePanel={[]}
       accent={{
         shell: "bg-[linear-gradient(180deg,_#f7fef9_0%,_#fbfffc_40%,_#ffffff_100%)]",

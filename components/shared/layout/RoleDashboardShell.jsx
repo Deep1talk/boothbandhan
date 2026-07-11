@@ -5,10 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Bell,
   ChevronLeft,
   ChevronRight,
   FolderKanban,
   Globe,
+  ImageIcon,
+  Images,
   LifeBuoy,
   ListTree,
   LogIn,
@@ -16,15 +19,19 @@ import {
   UserRound,
 } from "lucide-react";
 import LogoutButton from "@/components/shared/auth/LogoutButton";
+import DashboardNotificationsPanel from "@/components/shared/notifications/DashboardNotificationsPanel";
 import { WEBSITE_LOGIN } from "@/routes/websiteRoutes";
 import { useLanguage } from "@/components/shared/providers/LanguageProvider";
 
 const ICON_MAP = {
+  bell: Bell,
   overview: FolderKanban,
   helpDesk: LifeBuoy,
   list: ListTree,
   add: PlusCircle,
   user: UserRound,
+  poster: ImageIcon,
+  gallery: Images,
 };
 
 const DASHBOARD_TRANSLATIONS = {
@@ -44,7 +51,7 @@ const DASHBOARD_TRANSLATIONS = {
     optimized: "फोन और डेस्कटॉप दोनों के लिए अनुकूलित",
     roles: {
       Admin: "एडमिन",
-      Candidate: "उम्मीदवार",
+      Candidate: "फील्ड एसोसिएट",
       Leader: "लीडर",
     },
     labels: {
@@ -52,11 +59,15 @@ const DASHBOARD_TRANSLATIONS = {
       "Admin workspace": "एडमिन कार्यक्षेत्र",
       "Candidate panel": "उम्मीदवार पैनल",
       "Candidate workspace": "उम्मीदवार कार्यक्षेत्र",
+      "Field Associate panel": "फील्ड एसोसिएट पैनल",
+      "Field Associate workspace": "फील्ड एसोसिएट कार्यक्षेत्र",
       "Leader panel": "लीडर पैनल",
       "Leader workspace": "लीडर कार्यक्षेत्र",
       Overview: "ओवरव्यू",
       "Create Candidate": "उम्मीदवार बनाएं",
+      "Create Field Associate": "फील्ड एसोसिएट बनाएं",
       Candidates: "उम्मीदवार",
+      "Field Associates": "फील्ड एसोसिएट",
       "Direct Leaders": "प्रत्यक्ष लीडर",
       Profile: "प्रोफाइल",
       "Create Leader": "लीडर बनाएं",
@@ -80,7 +91,7 @@ const DASHBOARD_TRANSLATIONS = {
     optimized: "Optimized for phone and desktop",
     roles: {
       Admin: "Admin",
-      Candidate: "Candidate",
+      Candidate: "Field Associate",
       Leader: "Leader",
     },
     labels: {},
@@ -95,8 +106,10 @@ export default function RoleDashboardShell({
   stats = [],
   navigation = [],
   mobileNavigation,
+  hideMobileNavigation = false,
   mobileFullWidthTopSections = false,
   sidePanel = [],
+  notificationAccent,
   children,
   accent = {
     shell: "bg-[linear-gradient(180deg,_#fffaf5_0%,_#fffdf8_40%,_#ffffff_100%)]",
@@ -117,8 +130,10 @@ export default function RoleDashboardShell({
   const hasSidePanel = sidePanel.length > 0;
   const hasStats = stats.length > 0;
 
-  const desktopNavigation = navigation.slice(0, 5);
-  const mobileNavigationItems = (mobileNavigation || navigation).slice(0, 4);
+  const desktopNavigation = navigation;
+  const mobileNavigationItems = hideMobileNavigation
+    ? []
+    : (mobileNavigation || navigation).slice(0, 5);
   const containerPaddingClasses = mobileFullWidthTopSections
     ? "px-0 py-3 sm:px-4 sm:py-4 lg:px-5"
     : "px-3 py-3 sm:px-4 sm:py-4 lg:px-5";
@@ -382,7 +397,7 @@ export default function RoleDashboardShell({
             <div className="space-y-4">
               <section
                 id="overview"
-                className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/90 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-5"
+                className="hidden overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/90 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-5 md:block"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                   <div>
@@ -433,6 +448,10 @@ export default function RoleDashboardShell({
                 </section>
               ) : null}
 
+              {notificationAccent ? (
+                <DashboardNotificationsPanel accent={notificationAccent} />
+              ) : null}
+
               <div className="space-y-4">{children}</div>
             </div>
 
@@ -460,31 +479,38 @@ export default function RoleDashboardShell({
         </div>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/80 bg-white/92 px-3 pb-[calc(env(safe-area-inset-bottom)+0.9rem)] pt-3 shadow-[0_-18px_50px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
-        <div className="mx-auto grid max-w-xl grid-cols-4 gap-2">
-          {mobileNavigationItems.map((item) => {
-            const isActive = pathname === item.href;
+      {mobileNavigationItems.length ? (
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/80 bg-white/92 px-3 pb-[calc(env(safe-area-inset-bottom)+0.9rem)] pt-3 shadow-[0_-18px_50px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
+          <div
+            className="mx-auto grid max-w-xl gap-2"
+            style={{
+              gridTemplateColumns: `repeat(${Math.max(mobileNavigationItems.length, 1)}, minmax(0, 1fr))`,
+            }}
+          >
+            {mobileNavigationItems.map((item) => {
+              const isActive = pathname === item.href;
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-[1.2rem] px-2 py-2 text-center text-[11px] font-semibold transition ${
-                  isActive
-                    ? `${accent.nav} shadow-lg`
-                    : "bg-slate-100/85 text-slate-600"
-                }`}
-              >
-                {(() => {
-                  const Icon = ICON_MAP[item.icon] || UserRound;
-                  return <Icon className="size-4.5" />;
-                })()}
-                <span className="leading-tight">{translateLabel(item.label)}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-[1.2rem] px-2 py-2 text-center text-[11px] font-semibold transition ${
+                    isActive
+                      ? `${accent.nav} shadow-lg`
+                      : "bg-slate-100/85 text-slate-600"
+                  }`}
+                >
+                  {(() => {
+                    const Icon = ICON_MAP[item.icon] || UserRound;
+                    return <Icon className="size-4.5" />;
+                  })()}
+                  <span className="leading-tight">{translateLabel(item.label)}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      ) : null}
     </main>
   );
 }

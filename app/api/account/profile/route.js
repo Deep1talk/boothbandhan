@@ -56,8 +56,8 @@ export async function PUT(req) {
         return errorResponse(400, "Profile picture must be an image.");
       }
 
-      if (avatarFile.size > 5 * 1024 * 1024) {
-        return errorResponse(400, "Profile picture must be 5MB or smaller.");
+      if (avatarFile.size > 1024 * 1024) {
+        return errorResponse(400, "Profile picture must be 1MB or smaller after optimization.");
       }
 
       const uploadResult = await uploadImageToCloudinary(avatarFile, {

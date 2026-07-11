@@ -1,12 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { CheckCircle2, CircleDollarSign, Eye, EyeOff, LoaderCircle, Lock } from "lucide-react";
+import { CheckCircle2, CircleDollarSign, Eye, EyeOff, ImagePlus, LoaderCircle, Lock } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   BIHAR_DISTRICTS,
+  BLOOD_GROUP_OPTIONS,
   CASTE_CATEGORY_OPTIONS,
   GENDER_OPTIONS,
   getVidhansabhaOptions,
@@ -44,7 +46,7 @@ const FORM_TRANSLATIONS = {
     "Enter 10 digit WhatsApp number": "10 अंकों का व्हाट्सऐप नंबर दर्ज करें",
     Email: "ईमेल",
     "Full Address": "पूरा पता",
-    "Village / Mohalla / street / address": "गांव / मोहल्ला / सड़क / पता",
+    "Village / Mohalla / street / address": "Village / Mohalla / Street / Address / Pincode",
     Ward: "वार्ड",
     "Enter ward name / number": "वार्ड नाम / नंबर दर्ज करें",
     Panchayat: "पंचायत",
@@ -100,11 +102,14 @@ const FORM_TRANSLATIONS = {
     "Pay ₹100": "₹100 भुगतान करें",
     "Leader account has been created.": "लीडर खाता बन गया है।",
     "Until payment is completed, this leader stays locked with pending payment status.": "भुगतान पूरा होने तक यह लीडर लंबित भुगतान स्थिति के साथ लॉक रहेगा।",
+    "Create Field Associate": "फील्ड एसोसिएट बनाएं",
     "Create Candidate": "उम्मीदवार बनाएं",
     "Create Leader": "लीडर बनाएं",
     "Register Leader": "लीडर पंजीकरण",
+    "New field associates link to your account automatically.": "नए फील्ड एसोसिएट अपने आप आपके खाते से जुड़ेंगे।",
     "New candidates link to your account automatically.": "नए उम्मीदवार अपने आप आपके खाते से जुड़ेंगे।",
     "New leaders link to your account automatically.": "नए लीडर अपने आप आपके खाते से जुड़ेंगे।",
+    "Create a leader account with full personal, area, and political details linked to your field associate profile.": "अपने फील्ड एसोसिएट प्रोफाइल से जुड़े पूर्ण व्यक्तिगत, क्षेत्रीय और राजनीतिक विवरणों के साथ लीडर खाता बनाएं।",
     "Create a leader account with full personal, area, and political details linked to your candidate profile.": "अपने उम्मीदवार प्रोफाइल से जुड़े पूर्ण व्यक्तिगत, क्षेत्रीय और राजनीतिक विवरणों के साथ लीडर खाता बनाएं।",
   },
   en: {},
@@ -228,6 +233,8 @@ export default function CreateManagedUserForm({
   const [showPassword, setShowPassword] = useState(false);
   const [paymentChoice, setPaymentChoice] = useState(null);
   const [isPaymentBusy, setIsPaymentBusy] = useState(false);
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImageInputKey, setProfileImageInputKey] = useState(0);
   const {
     register,
     handleSubmit,
@@ -278,6 +285,9 @@ export default function CreateManagedUserForm({
           name: "",
           email: "",
           phone: "",
+          idNo: "",
+          bloodGroup: "",
+          fullAddress: "",
           block: "",
           district: "",
           vidhansabha: "",
@@ -291,6 +301,10 @@ export default function CreateManagedUserForm({
     () => getVidhansabhaOptions(selectedDistrict),
     [selectedDistrict]
   );
+  const profileImagePreviewUrl = useMemo(
+    () => (profileImageFile ? URL.createObjectURL(profileImageFile) : ""),
+    [profileImageFile]
+  );
 
   useEffect(() => {
     if (!selectedDistrict) {
@@ -302,9 +316,54 @@ export default function CreateManagedUserForm({
     }
   }, [selectedDistrict, selectedVidhansabha, setValue, vidhansabhaOptions]);
 
+  useEffect(() => {
+    return () => {
+      if (profileImagePreviewUrl) {
+        URL.revokeObjectURL(profileImagePreviewUrl);
+      }
+    };
+  }, [profileImagePreviewUrl]);
+
+  const handleProfileImageChange = (event) => {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      setProfileImageFile(null);
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      event.target.value = "";
+      toastAlert("error", "Invalid image", "Please choose an image file for the profile picture.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      event.target.value = "";
+      toastAlert("error", "Image too large", "Profile picture must be 2MB or smaller.");
+      return;
+    }
+
+    setProfileImageFile(file);
+  };
+
   const onSubmit = async (data) => {
     try {
-      const { data: response } = await axios.post("/api/users/create", data);
+      const formData = new FormData();
+
+      Object.entries(data).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "") {
+          return;
+        }
+
+        formData.append(key, typeof value === "boolean" ? String(value) : value);
+      });
+
+      if (profileImageFile) {
+        formData.append("profileImage", profileImageFile);
+      }
+
+      const { data: response } = await axios.post("/api/users/create", formData);
       if (!response.success) {
         throw new Error(response.message);
       }
@@ -314,6 +373,8 @@ export default function CreateManagedUserForm({
         `A verification email has been sent to ${response.data?.user?.email || data.email}. Please verify the email before login.`
       );
       reset();
+      setProfileImageFile(null);
+      setProfileImageInputKey((current) => current + 1);
       if (isLeaderForm) {
         setPaymentChoice(response.data?.user ?? null);
       }
@@ -789,6 +850,25 @@ export default function CreateManagedUserForm({
               required
             />
             <TextField
+              id={`${submitLabel}-idNo`}
+              label={t("ID No.")}
+              name="idNo"
+              placeholder={t("Enter ID number")}
+              register={register}
+              error={errors.idNo}
+              required
+            />
+            <SelectField
+              id={`${submitLabel}-bloodGroup`}
+              label={t("Blood Group")}
+              name="bloodGroup"
+              placeholder={t("Select blood group")}
+              options={BLOOD_GROUP_OPTIONS}
+              register={register}
+              error={errors.bloodGroup}
+              required
+            />
+            <TextField
               id={`${submitLabel}-block`}
               label={t("Block")}
               name="block"
@@ -817,6 +897,57 @@ export default function CreateManagedUserForm({
               error={errors.vidhansabha}
               required
             />
+            <TextField
+              id={`${submitLabel}-fullAddress`}
+              label={t("Full Address")}
+              name="fullAddress"
+              placeholder={t("Village / Mohalla / street / address")}
+              register={register}
+              error={errors.fullAddress}
+              className="md:col-span-2"
+              required
+            />
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium" htmlFor={`${submitLabel}-profileImage`}>
+                {t("Profile Picture")}
+              </label>
+              <div className="rounded-[1.4rem] border border-orange-200 bg-white/90 p-4">
+                <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-3 rounded-[1.2rem] border border-dashed border-orange-300 bg-orange-50/60 px-4 py-6 text-center transition hover:bg-orange-100/70">
+                  <ImagePlus className="size-7 text-orange-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Choose profile picture</p>
+                    <p className="mt-1 text-xs text-slate-600">{t("JPG, PNG, or WEBP up to 2MB.")}</p>
+                  </div>
+                  <input
+                    key={profileImageInputKey}
+                    id={`${submitLabel}-profileImage`}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleProfileImageChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              {profileImagePreviewUrl ? (
+                <div className="overflow-hidden rounded-[1.25rem] border border-orange-200 bg-white shadow-sm">
+                  <div className="relative aspect-[4/3] bg-slate-100">
+                    <Image
+                      src={profileImagePreviewUrl}
+                      alt="Profile preview"
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <p className="truncate text-sm font-medium text-slate-900">{profileImageFile?.name || "Profile image"}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {profileImageFile ? `${Math.max(1, Math.round(profileImageFile.size / 1024))} KB` : ""}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </>
         )}
 

@@ -23,6 +23,10 @@ export default async function LeaderDashboardPage() {
             text: "You can now update your photo and password from the Profile page.",
           },
           {
+            title: "Greeting Template",
+            text: "Open Greeting Template to generate festival posters with your photo, tagline, and contact details on active templates.",
+          },
+          {
             title: "Help desk",
             text: "Use the Help Desk page to submit public problems from your area for admin review.",
           },

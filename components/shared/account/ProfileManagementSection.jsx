@@ -9,31 +9,147 @@ import { useForm } from "react-hook-form";
 import { toastAlert } from "@/lib/toastAlert";
 import { zodLoggedInPasswordUpdateSchema, zodProfileSchema } from "@/lib/zodSchema";
 import { useLanguage } from "@/components/shared/providers/LanguageProvider";
+import FieldAssociateIdCardPanel from "@/components/shared/account/FieldAssociateIdCardPanel";
 
 const DEFAULT_AVATAR = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+const MAX_AVATAR_BYTES = 1024 * 1024;
+const MAX_AVATAR_DIMENSION = 1600;
+
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Unable to read the selected image."));
+    };
+
+    image.src = objectUrl;
+  });
+}
+
+async function compressAvatarFile(file) {
+  if (file.size <= MAX_AVATAR_BYTES) {
+    return file;
+  }
+
+  const image = await loadImageFromFile(file);
+  const scale = Math.min(
+    1,
+    MAX_AVATAR_DIMENSION / Math.max(image.width || 1, image.height || 1)
+  );
+  let width = Math.max(1, Math.round((image.width || 1) * scale));
+  let height = Math.max(1, Math.round((image.height || 1) * scale));
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Unable to optimize the selected image.");
+  }
+
+  const renderImage = () => {
+    canvas.width = width;
+    canvas.height = height;
+    context.clearRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+  };
+
+  renderImage();
+
+  const mimeType = file.type === "image/png" ? "image/jpeg" : file.type || "image/jpeg";
+  let quality = mimeType === "image/png" ? undefined : 0.9;
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const blob = await new Promise((resolve) => {
+      canvas.toBlob(resolve, mimeType, quality);
+    });
+
+    if (!blob) {
+      throw new Error("Unable to optimize the selected image.");
+    }
+
+    if (blob.size <= MAX_AVATAR_BYTES) {
+      const outputName = file.name.replace(/\.[^.]+$/, "") || "profile-photo";
+      const extension = mimeType === "image/png" ? "png" : "jpg";
+
+      return new File([blob], `${outputName}.${extension}`, {
+        type: mimeType,
+        lastModified: Date.now(),
+      });
+    }
+
+    if (quality && quality > 0.45) {
+      quality -= 0.1;
+      continue;
+    }
+
+    width = Math.max(1, Math.round(width * 0.85));
+    height = Math.max(1, Math.round(height * 0.85));
+    renderImage();
+  }
+
+  throw new Error("Please choose a smaller image. We could not optimize it below 1MB.");
+}
 
 export default function ProfileManagementSection({ user }) {
   const { language } = useLanguage();
   const t = (en, hi) => (language === "hi" ? hi : en);
   const router = useRouter();
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isOptimizingAvatar, setIsOptimizingAvatar] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(user.avatar || DEFAULT_AVATAR);
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0] || null;
 
-    setSelectedFile(file);
-
-    if (file) {
-      setPreviewUrl(URL.createObjectURL(file));
+    if (!file) {
+      setSelectedFile(null);
+      setPreviewUrl(user.avatar || DEFAULT_AVATAR);
       return;
     }
 
-    setPreviewUrl(user.avatar || DEFAULT_AVATAR);
+    if (!file.type.startsWith("image/")) {
+      toastAlert("error", "Invalid image", "Please choose an image file.");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      setIsOptimizingAvatar(true);
+      const optimizedFile = await compressAvatarFile(file);
+
+      setSelectedFile(optimizedFile);
+      setPreviewUrl(URL.createObjectURL(optimizedFile));
+      toastAlert(
+        "success",
+        "Photo optimized",
+        optimizedFile.size > file.size
+          ? "Profile photo is ready to upload."
+          : "Profile photo was optimized automatically and kept under 1MB."
+      );
+    } catch (error) {
+      setSelectedFile(null);
+      setPreviewUrl(user.avatar || DEFAULT_AVATAR);
+      event.target.value = "";
+      toastAlert(
+        "error",
+        "Unable to optimize photo",
+        error.message || "Please choose a smaller image."
+      );
+    } finally {
+      setIsOptimizingAvatar(false);
+    }
   };
 
   const clearSelectedFile = () => {
@@ -136,8 +252,11 @@ export default function ProfileManagementSection({ user }) {
   };
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-      <section className="rounded-[1.5rem] border border-border/60 bg-white/90 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:rounded-[1.75rem] sm:p-6">
+    <div className="space-y-4">
+      {user.role === "Candidate" ? <FieldAssociateIdCardPanel user={user} /> : null}
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+        <section className="rounded-[1.5rem] border border-border/60 bg-white/90 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:rounded-[1.75rem] sm:p-6">
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             Profile
@@ -146,7 +265,7 @@ export default function ProfileManagementSection({ user }) {
             Manage your account details
           </h2>
           <p className="text-sm leading-7 text-muted-foreground">
-            Update your display name and profile picture. Pictures are uploaded to Cloudinary.
+            Update your display name and profile picture. Pictures are optimized automatically and kept under 1MB before upload.
           </p>
         </div>
 
@@ -169,7 +288,7 @@ export default function ProfileManagementSection({ user }) {
                 <p className="text-sm text-muted-foreground">{user.role}</p>
                 {selectedFile ? (
                   <p className="mt-1 text-xs text-emerald-700">
-                    New image selected: {selectedFile.name}
+                    New image selected: {selectedFile.name} ({Math.max(1, Math.round(selectedFile.size / 1024))} KB)
                   </p>
                 ) : (
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -181,8 +300,8 @@ export default function ProfileManagementSection({ user }) {
 
             <div className="flex flex-1 flex-wrap gap-2 sm:justify-end">
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-medium text-foreground transition hover:bg-accent">
-                <Upload className="size-4" />
-                Choose photo
+                {isOptimizingAvatar ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                {isOptimizingAvatar ? "Optimizing..." : "Choose photo"}
                 <input
                   type="file"
                   accept="image/*"
@@ -193,7 +312,7 @@ export default function ProfileManagementSection({ user }) {
               <button
                 type="button"
                 onClick={clearSelectedFile}
-                disabled={!selectedFile}
+                disabled={!selectedFile || isOptimizingAvatar}
                 className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-white px-4 text-sm font-medium text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <X className="size-4" />
@@ -202,7 +321,7 @@ export default function ProfileManagementSection({ user }) {
               <button
                 type="button"
                 onClick={handleRemoveAvatar}
-                disabled={isRemovingAvatar}
+                disabled={isRemovingAvatar || isOptimizingAvatar}
                 className="inline-flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-sm font-medium text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isRemovingAvatar ? <LoaderCircle className="size-4 animate-spin" /> : <UserRound className="size-4" />}
@@ -227,22 +346,22 @@ export default function ProfileManagementSection({ user }) {
 
           <button
             type="submit"
-            disabled={isProfileSubmitting}
+            disabled={isProfileSubmitting || isOptimizingAvatar}
             className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isProfileSubmitting ? (
+            {isProfileSubmitting || isOptimizingAvatar ? (
               <>
                 <LoaderCircle className="mr-2 size-4 animate-spin" />
-                Saving profile...
+                {isOptimizingAvatar ? "Optimizing photo..." : "Saving profile..."}
               </>
             ) : (
               "Save profile"
             )}
           </button>
         </form>
-      </section>
+        </section>
 
-      <section className="rounded-[1.5rem] border border-border/60 bg-white/90 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:rounded-[1.75rem] sm:p-6">
+        <section className="rounded-[1.5rem] border border-border/60 bg-white/90 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:rounded-[1.75rem] sm:p-6">
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             Security
@@ -343,7 +462,8 @@ export default function ProfileManagementSection({ user }) {
             )}
           </button>
         </form>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

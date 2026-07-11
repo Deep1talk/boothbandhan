@@ -39,10 +39,10 @@ export default function AdminCandidatesListSection({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-            Candidate list
+            Field associate list
           </p>
           <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
-            Candidates
+            Field Associates
           </h2>
         </div>
 
@@ -70,13 +70,13 @@ export default function AdminCandidatesListSection({
       </div>
 
       <ManagedUserFilters
-        title="Candidate filters"
+        title="Field Associate filters"
         filters={filters}
         onChange={onFilterChange}
         onClear={onClearFilters}
         resultCount={pagination?.itemCount ?? candidates?.length ?? 0}
         totalCount={pagination?.totalItems ?? candidates?.length ?? 0}
-        searchPlaceholder="Name | Phone | Block"
+        searchPlaceholder="Name | Phone | Id No | Block"
       />
 
       <div className="mt-5 space-y-3">
@@ -84,7 +84,7 @@ export default function AdminCandidatesListSection({
           <div className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-border/70 bg-background/60">
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <LoaderCircle className="size-4 animate-spin" />
-              Loading candidates...
+              Loading field associates...
             </div>
           </div>
         ) : candidates.length ? (
@@ -106,7 +106,7 @@ export default function AdminCandidatesListSection({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex rounded-full bg-orange-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-orange-900">
-                      Candidate
+                      Field Associate
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] text-muted-foreground">
                       <UsersRound className="size-3.5" />
@@ -125,7 +125,7 @@ export default function AdminCandidatesListSection({
                   <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(220px,1.2fr)_minmax(180px,1fr)_minmax(140px,0.8fr)_minmax(120px,0.8fr)] xl:items-center">
                     <div className="min-w-0">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        Candidate
+                        Field Associate
                       </p>
                       <h3 className="mt-1 truncate text-base font-semibold text-foreground">
                         {candidate.name}
@@ -140,6 +140,12 @@ export default function AdminCandidatesListSection({
                         Contact
                       </p>
                       <p className="mt-1 text-sm text-foreground">{candidate.phone}</p>
+                      <p className="mt-1 text-xs font-medium text-orange-700">
+                        ID: {candidate.idNo || "Not added"}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Blood Group: {candidate.bloodGroup || "Not added"}
+                      </p>
                     </div>
 
                     <div>
@@ -168,24 +174,26 @@ export default function AdminCandidatesListSection({
 
                 <div className="flex shrink-0 flex-col gap-2 xl:min-w-[250px] xl:items-end">
                   <ChevronDown className="hidden size-4 text-muted-foreground xl:block" />
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onToggleLock({ ...candidate, role: "Candidate" });
-                    }}
-                    disabled={lockingId === candidate.id}
-                    className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto ${candidate.isLocked ? "border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100" : "border border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100"}`}
-                  >
-                    {lockingId === candidate.id ? (
-                      <LoaderCircle className="size-4 animate-spin" />
-                    ) : candidate.isLocked ? (
-                      <Unlock className="size-4" />
-                    ) : (
-                      <Lock className="size-4" />
-                    )}
-                    {candidate.isLocked ? "Unlock" : "Lock"}
-                  </button>
+                  <div className="w-full xl:w-auto">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onToggleLock({ ...candidate, role: "Candidate" });
+                      }}
+                      disabled={lockingId === candidate.id}
+                      className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${candidate.isLocked ? "border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100" : "border border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100"}`}
+                    >
+                      {lockingId === candidate.id ? (
+                        <LoaderCircle className="size-4 animate-spin" />
+                      ) : candidate.isLocked ? (
+                        <Unlock className="size-4" />
+                      ) : (
+                        <Lock className="size-4" />
+                      )}
+                      {candidate.isLocked ? "Unlock" : "Lock"}
+                    </button>
+                  </div>
                   <Link
                     href={getAdminCandidateLeadersRoute(candidate.id)}
                     onClick={(event) => event.stopPropagation()}
@@ -199,7 +207,7 @@ export default function AdminCandidatesListSection({
           ))
         ) : (
           <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 p-6 text-sm text-muted-foreground">
-            No candidates match the selected filters.
+            No field associates match the selected filters.
           </div>
         )}
       </div>

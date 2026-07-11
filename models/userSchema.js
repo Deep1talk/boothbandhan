@@ -30,6 +30,16 @@ const userSchema = new mongoose.Schema({
         unique: true,
         trim: true
     },
+    idNo: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    bloodGroup: {
+        type: String,
+        trim: true,
+        default: ""
+    },
     fatherName: {
         type: String,
         trim: true,
@@ -205,6 +215,48 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true,
         default: null
+    },
+    greetingTagline: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    instagramHandle: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    twitterHandle: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    facebookHandle: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    posterPhoto: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    posterPhotoPublicId: {
+        type: String,
+        trim: true,
+        default: null
+    },
+    posterPhotoScale: {
+        type: Number,
+        default: 1
+    },
+    posterPhotoOffsetX: {
+        type: Number,
+        default: 0
+    },
+    posterPhotoOffsetY: {
+        type: Number,
+        default: 0
     },
     deletedAt: {
         type: Date,

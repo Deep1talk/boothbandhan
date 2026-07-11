@@ -148,7 +148,7 @@ export default function CandidateLeadersSection() {
             onClear={() => setFilters(INITIAL_MANAGED_USER_FILTERS)}
             resultCount={filteredLeaders.length}
             totalCount={data.leaders?.length ?? 0}
-            searchPlaceholder="Name | Phone | Block"
+            searchPlaceholder="Name | Phone | Id No | Block"
           />
 
           <div className="mt-6">

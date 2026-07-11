@@ -152,7 +152,7 @@ export default function AdminDirectLeadersPageSection() {
           }}
           resultCount={data.pagination?.itemCount ?? data.leaders?.length ?? 0}
           totalCount={data.pagination?.totalItems ?? data.leaders?.length ?? 0}
-          searchPlaceholder="Name | Phone | Block"
+          searchPlaceholder="Name | Phone | Id No | Block"
         />
 
         {isLoading ? (

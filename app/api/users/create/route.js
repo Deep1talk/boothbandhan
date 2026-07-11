@@ -1,4 +1,5 @@
 import { connectDB } from "@/lib/connectDB";
+import { destroyCloudinaryImage, uploadImageToCloudinary } from "@/lib/cloudinary";
 import { getLockedUserMessage, getRequestUser } from "@/lib/authUser";
 import { errorResponse, successResponse } from "@/lib/helper";
 import { zodCreateLeaderSchema, zodCreateManagedUserSchema } from "@/lib/zodSchema";
@@ -22,68 +23,117 @@ export async function POST(req) {
       return errorResponse(403, "You are not allowed to create child users");
     }
 
-    const data = await req.json();
+    const formData = await req.formData();
+    const rawEntries = Object.fromEntries(formData.entries());
+    const profileImageFile = formData.get("profileImage");
+    const data = {
+      ...rawEntries,
+      declarationAccepted:
+        rawEntries.declarationAccepted === true ||
+        rawEntries.declarationAccepted === "true" ||
+        rawEntries.declarationAccepted === "on",
+    };
     const validateData = (childRole === "Leader" ? zodCreateLeaderSchema : zodCreateManagedUserSchema).safeParse(data);
     if (!validateData.success) {
       return errorResponse(400, "Invalid data", validateData.error.issues);
     }
 
+    let uploadedProfileImage = null;
+
+    if (profileImageFile instanceof File && profileImageFile.size > 0) {
+      if (!profileImageFile.type.startsWith("image/")) {
+        return errorResponse(400, "Profile photo must be an image file");
+      }
+
+      if (profileImageFile.size > 2 * 1024 * 1024) {
+        return errorResponse(400, "Profile photo must be 2MB or smaller");
+      }
+
+      uploadedProfileImage = await uploadImageToCloudinary(profileImageFile);
+    }
+
     const { name, email, password, phone } = validateData.data;
-    const result = await createUserWithVerification({
-      name,
-      email,
-      password,
-      phone,
-      role: childRole,
-      parentId: user.id,
-      profileData: childRole === "Leader" ? {
-        fatherName: validateData.data.fatherName,
-        age: validateData.data.age,
-        gender: validateData.data.gender,
-        casteCategory: validateData.data.casteCategory,
-        religion: validateData.data.religion,
-        whatsappNumber: validateData.data.whatsappNumber,
-        fullAddress: validateData.data.fullAddress,
-        ward: validateData.data.ward,
-        panchayat: validateData.data.panchayat,
-        block: validateData.data.block,
-        district: validateData.data.district,
-        vidhansabha: validateData.data.vidhansabha,
-        currentParty: validateData.data.currentParty,
-        politicalPosition: validateData.data.politicalPosition,
-        hasContestedElection: validateData.data.hasContestedElection,
-        experienceYears: validateData.data.experienceYears,
-        mainSupportBase: validateData.data.mainSupportBase,
-        activeWorkerCount: validateData.data.activeWorkerCount,
-        totalVoters: validateData.data.totalVoters,
-        hasTenHouseWorkers: validateData.data.hasTenHouseWorkers,
-        digitalCampaign: validateData.data.digitalCampaign,
-        financialPreparedness: validateData.data.financialPreparedness,
-        topIssues: [
-          validateData.data.topIssue1,
-          validateData.data.topIssue2,
-          validateData.data.topIssue3,
-        ],
-        declarationAccepted: validateData.data.declarationAccepted,
-        registrationDate: validateData.data.registrationDate,
-        registrationPlace: validateData.data.registrationPlace,
-        signatureName: validateData.data.signatureName,
-      } : {
-        block: validateData.data.block,
-        district: validateData.data.district,
-        vidhansabha: validateData.data.vidhansabha,
-      },
-      userState: childRole === "Leader" ? {
-        isLocked: true,
-        LockReason: "Registration payment pending.",
-        registrationFeePaid: false,
-        registrationPaymentStatus: "pending",
-        paymentStatus: "pending",
-        registrationPaymentAmount: 100,
-      } : null,
-    });
+    const sharedProfileData = uploadedProfileImage
+      ? {
+          avatar: uploadedProfileImage.url,
+          avatarPublicId: uploadedProfileImage.publicId,
+        }
+      : {};
+
+    let result;
+
+    try {
+      result = await createUserWithVerification({
+        name,
+        email,
+        password,
+        phone,
+        role: childRole,
+        parentId: user.id,
+        profileData: childRole === "Leader" ? {
+          ...sharedProfileData,
+          fatherName: validateData.data.fatherName,
+          age: validateData.data.age,
+          gender: validateData.data.gender,
+          casteCategory: validateData.data.casteCategory,
+          religion: validateData.data.religion,
+          whatsappNumber: validateData.data.whatsappNumber,
+          fullAddress: validateData.data.fullAddress,
+          ward: validateData.data.ward,
+          panchayat: validateData.data.panchayat,
+          block: validateData.data.block,
+          district: validateData.data.district,
+          vidhansabha: validateData.data.vidhansabha,
+          currentParty: validateData.data.currentParty,
+          politicalPosition: validateData.data.politicalPosition,
+          hasContestedElection: validateData.data.hasContestedElection,
+          experienceYears: validateData.data.experienceYears,
+          mainSupportBase: validateData.data.mainSupportBase,
+          activeWorkerCount: validateData.data.activeWorkerCount,
+          totalVoters: validateData.data.totalVoters,
+          hasTenHouseWorkers: validateData.data.hasTenHouseWorkers,
+          digitalCampaign: validateData.data.digitalCampaign,
+          financialPreparedness: validateData.data.financialPreparedness,
+          topIssues: [
+            validateData.data.topIssue1,
+            validateData.data.topIssue2,
+            validateData.data.topIssue3,
+          ],
+          declarationAccepted: validateData.data.declarationAccepted,
+          registrationDate: validateData.data.registrationDate,
+          registrationPlace: validateData.data.registrationPlace,
+          signatureName: validateData.data.signatureName,
+        } : {
+          ...sharedProfileData,
+          idNo: validateData.data.idNo,
+          bloodGroup: validateData.data.bloodGroup,
+          fullAddress: validateData.data.fullAddress,
+          block: validateData.data.block,
+          district: validateData.data.district,
+          vidhansabha: validateData.data.vidhansabha,
+        },
+        userState: childRole === "Leader" ? {
+          isLocked: true,
+          LockReason: "Registration payment pending.",
+          registrationFeePaid: false,
+          registrationPaymentStatus: "pending",
+          paymentStatus: "pending",
+          registrationPaymentAmount: 100,
+        } : null,
+      });
+    } catch (error) {
+      if (uploadedProfileImage?.publicId) {
+        await destroyCloudinaryImage(uploadedProfileImage.publicId).catch(() => null);
+      }
+
+      throw error;
+    }
 
     if (!result.success) {
+      if (uploadedProfileImage?.publicId) {
+        await destroyCloudinaryImage(uploadedProfileImage.publicId).catch(() => null);
+      }
+
       return errorResponse(result.status, result.message);
     }
 

@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
-import { BIHAR_DISTRICTS, getVidhansabhaOptions } from "@/lib/leaderRegistration";
+import {
+  BIHAR_DISTRICTS,
+  BLOOD_GROUP_OPTIONS,
+  getVidhansabhaOptions,
+} from "@/lib/leaderRegistration";
 
 export default function ManagedUserFilters({
   title = "Filters",
-  searchPlaceholder = "Name | Phone | Block",
+  searchPlaceholder = "Name | Phone | Id No | Block",
   filters,
   onChange,
   onClear,
@@ -61,7 +65,7 @@ export default function ManagedUserFilters({
             </button>
           </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-[minmax(260px,1.2fr)_minmax(180px,0.9fr)_minmax(180px,0.9fr)_minmax(180px,0.9fr)]">
+          <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
             <div className="space-y-2">
               <span className="text-sm font-medium text-foreground">Date range</span>
               <div className="grid gap-2 rounded-lg border border-border bg-background p-2 sm:grid-cols-2">
@@ -89,6 +93,19 @@ export default function ManagedUserFilters({
                 </label>
               </div>
             </div>
+
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Status</span>
+              <select
+                value={filters.status}
+                onChange={(event) => onChange("status", event.target.value)}
+                className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+              >
+                <option value="">All status</option>
+                <option value="Active">Active</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </label>
 
             <label className="space-y-2">
               <span className="text-sm font-medium text-foreground">District</span>
@@ -134,6 +151,22 @@ export default function ManagedUserFilters({
                   className="flex h-11 w-full rounded-lg border border-border bg-background pl-10 pr-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
                 />
               </div>
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Blood Group</span>
+              <select
+                value={filters.bloodGroup}
+                onChange={(event) => onChange("bloodGroup", event.target.value)}
+                className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+              >
+                <option value="">All blood groups</option>
+                {BLOOD_GROUP_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
         </div>

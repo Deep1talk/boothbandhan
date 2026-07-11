@@ -1,20 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, LoaderCircle, Lock, RefreshCw, ShieldCheck, Unlock, UsersRound } from "lucide-react";
+import axios from "axios";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
+import { ChevronDown, Download, ImagePlus, LoaderCircle, Lock, RefreshCw, ShieldCheck, Unlock, UsersRound, X } from "lucide-react";
 import ManagedUserFilters from "@/components/shared/filters/ManagedUserFilters";
 import AdminLeaderProblemsPanel from "@/components/admin/leaders/AdminLeaderProblemsPanel";
 import PaginationControls from "@/components/shared/filters/PaginationControls";
 import { ADMIN_CANDIDATES } from "@/routes/adminpanelRoutes";
 import { useRemoteData } from "@/hooks/useRemoteData";
 import { getCandidateLeaders, toggleManagedUserLock } from "@/lib/client/usersClient";
+import { BIHAR_DISTRICTS, BLOOD_GROUP_OPTIONS, getVidhansabhaOptions } from "@/lib/leaderRegistration";
 import {
   buildManagedUserFilterQueryParams,
   createManagedUserFilters,
   MANAGED_USER_PAGE_SIZE,
 } from "@/lib/managedUserFilters";
 import { toastAlert } from "@/lib/toastAlert";
+import { zodAdminUpdateManagedUserSchema } from "@/lib/zodSchema";
 
 function formatDate(value) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -42,11 +48,103 @@ function paymentPillClass(status) {
   return "bg-slate-100 text-slate-900";
 }
 
+function buildCandidateInfoRows(candidate) {
+  if (!candidate) {
+    return [];
+  }
+
+  return [
+    { label: "ID No.", value: candidate.idNo || "Not added" },
+    { label: "Blood Group", value: candidate.bloodGroup || "Not added" },
+    { label: "Phone", value: candidate.phone || "Not added" },
+    { label: "Email", value: candidate.email || "Not added" },
+    { label: "Full Address", value: candidate.fullAddress || "Not added" },
+    { label: "Block", value: candidate.block || "Not added" },
+    { label: "District", value: candidate.district || "Not added" },
+    { label: "Assembly", value: candidate.vidhansabha || "Not added" },
+    { label: "Created", value: candidate.createdAt ? formatDate(candidate.createdAt) : "Not added" },
+    { label: "Status", value: candidate.isLocked ? "Locked" : "Active" },
+    { label: "Email Verify", value: candidate.isEmailVerified ? "Verified" : "Pending" },
+  ];
+}
+
+const ID_CARD_SIZE = {
+  width: 638,
+  height: 1011,
+};
+
+const ID_CARD_SIGN_SRC = "/assests/id-card/authorized-sign.png";
+const ID_CARD_LOGO_SRC = "/assests/images/logo.webp";
+const DEFAULT_AVATAR =
+  "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+
+function loadCardImage(src) {
+  return new Promise((resolve, reject) => {
+    if (!src) {
+      resolve(null);
+      return;
+    }
+
+    const image = new window.Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Unable to load image: ${src}`));
+    image.src = src;
+  });
+}
+
+async function canvasToBlob(canvas, type = "image/png", quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Unable to create ID card image."));
+        return;
+      }
+
+      resolve(blob);
+    }, type, quality);
+  });
+}
+
+function wrapCanvasText(ctx, text, maxWidth) {
+  if (!text) {
+    return [];
+  }
+
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let currentLine = words.shift() || "";
+
+  words.forEach((word) => {
+    const nextLine = `${currentLine} ${word}`.trim();
+
+    if (ctx.measureText(nextLine).width <= maxWidth) {
+      currentLine = nextLine;
+      return;
+    }
+
+    lines.push(currentLine);
+    currentLine = word;
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+}
+
 export default function AdminCandidateLeadersPageSection({ candidateId }) {
   const [lockingId, setLockingId] = useState("");
   const [isMonthlyAttendanceOpen, setIsMonthlyAttendanceOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState(createManagedUserFilters());
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImageInputKey, setProfileImageInputKey] = useState(0);
+  const [isDownloadingIdCard, setIsDownloadingIdCard] = useState(false);
+  const [idCardError, setIdCardError] = useState("");
+  const idCardCanvasRef = useRef(null);
   const { data, isLoading, isRefreshing, refresh } = useRemoteData(
     () =>
       getCandidateLeaders(candidateId, {
@@ -90,6 +188,220 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
       dependencyKey: JSON.stringify({ candidateId, page, filters }),
     }
   );
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(zodAdminUpdateManagedUserSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      idNo: "",
+      bloodGroup: "",
+      fullAddress: "",
+      block: "",
+      district: "",
+      vidhansabha: "",
+    },
+  });
+  const selectedDistrict = useWatch({ control, name: "district" });
+  const selectedVidhansabha = useWatch({ control, name: "vidhansabha" });
+  const vidhansabhaOptions = useMemo(
+    () => getVidhansabhaOptions(selectedDistrict),
+    [selectedDistrict]
+  );
+  const profileImagePreviewUrl = useMemo(
+    () => (profileImageFile ? URL.createObjectURL(profileImageFile) : ""),
+    [profileImageFile]
+  );
+
+  useEffect(() => {
+    if (data.candidate) {
+      reset({
+        name: data.candidate.name || "",
+        email: data.candidate.email || "",
+        phone: data.candidate.phone || "",
+        idNo: data.candidate.idNo || "",
+        bloodGroup: data.candidate.bloodGroup || "",
+        fullAddress: data.candidate.fullAddress || "",
+        block: data.candidate.block || "",
+        district: data.candidate.district || "",
+        vidhansabha: data.candidate.vidhansabha || "",
+      });
+    }
+  }, [data.candidate, reset]);
+
+  useEffect(() => {
+    if (!selectedDistrict) {
+      return;
+    }
+
+    if (selectedVidhansabha && !vidhansabhaOptions.includes(selectedVidhansabha)) {
+      setValue("vidhansabha", "");
+    }
+  }, [selectedDistrict, selectedVidhansabha, setValue, vidhansabhaOptions]);
+
+  useEffect(() => {
+    return () => {
+      if (profileImagePreviewUrl) {
+        URL.revokeObjectURL(profileImagePreviewUrl);
+      }
+    };
+  }, [profileImagePreviewUrl]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function renderIdCard() {
+      const candidate = data.candidate;
+      const canvas = idCardCanvasRef.current;
+
+      if (!candidate || !canvas) {
+        return;
+      }
+
+      setIdCardError("");
+
+      try {
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          throw new Error("Canvas preview is not available in this browser.");
+        }
+
+        const [logoImage, signImage, profileImage] = await Promise.all([
+          loadCardImage(ID_CARD_LOGO_SRC),
+          loadCardImage(ID_CARD_SIGN_SRC),
+          loadCardImage(candidate.avatar || DEFAULT_AVATAR),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        canvas.width = ID_CARD_SIZE.width;
+        canvas.height = ID_CARD_SIZE.height;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#4f98c7";
+        ctx.fillRect(canvas.width - 118, 0, 118, canvas.height * 0.53);
+        ctx.fillStyle = "#e02424";
+        ctx.fillRect(canvas.width - 118, canvas.height * 0.53, 118, canvas.height * 0.47);
+
+        ctx.save();
+        ctx.translate(canvas.width - 59, 245);
+        ctx.rotate(Math.PI / 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "700 42px Arial, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Field", 0, 0);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(canvas.width - 59, 765);
+        ctx.rotate(Math.PI / 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "700 44px Arial, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Associate", 0, 0);
+        ctx.restore();
+
+        if (logoImage) {
+          ctx.drawImage(logoImage, 28, 34, 130, 88);
+        }
+
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.font = "700 28px Arial, sans-serif";
+        ctx.fillStyle = "#1e5aa7";
+        ctx.fillText("Booth", 170, 42);
+        ctx.fillStyle = "#d42d2d";
+        ctx.fillText("Bandhan", 268, 42);
+        ctx.fillStyle = "#1e5aa7";
+        ctx.fillText("Pvt. Ltd.", 170, 78);
+
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = "#50505d";
+        ctx.strokeRect(92, 170, 286, 344);
+
+        if (profileImage) {
+          ctx.drawImage(profileImage, 98, 176, 274, 332);
+        }
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "700 32px Arial, sans-serif";
+        ctx.fillText(candidate.name || "Field Associate", 235, 540, 360);
+
+        const infoRows = [
+          ["ID No", candidate.idNo || "-"],
+          ["Blood Group", candidate.bloodGroup || "-"],
+          ["Contact", candidate.phone || "-"],
+          ["Assembly", candidate.vidhansabha || "-"],
+          ["District", candidate.district || "-"],
+          ["Block", candidate.block || "-"],
+        ];
+
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#111827";
+        ctx.font = "700 17px Arial, sans-serif";
+
+        infoRows.forEach(([label, value], index) => {
+          const y = 638 + index * 31;
+          ctx.fillText(label, 48, y);
+          ctx.font = "600 17px Arial, sans-serif";
+          ctx.fillText(`: ${value}`, 160, y);
+          ctx.font = "700 17px Arial, sans-serif";
+        });
+
+        if (signImage) {
+          ctx.drawImage(signImage, 360, 860, 118, 36);
+        }
+
+        ctx.textAlign = "right";
+        ctx.font = "700 13px Arial, sans-serif";
+        ctx.fillText("Authorised Signatory", 490, 904);
+
+        const addressLines = wrapCanvasText(
+          ctx,
+          candidate.fullAddress || "Address not added",
+          295
+        ).slice(0, 3);
+
+        ctx.fillStyle = "#e02424";
+        ctx.fillRect(0, canvas.height - 58, 57, 58);
+        ctx.fillRect(57, canvas.height - 84, 28, 26);
+
+        ctx.textAlign = "left";
+        ctx.font = "700 12px Arial, sans-serif";
+        ctx.fillStyle = "#111827";
+        ctx.fillText("Address:", 95, 962);
+        ctx.font = "600 12px Arial, sans-serif";
+        addressLines.forEach((line, index) => {
+          ctx.fillText(line, 160, 962 + index * 17, 300);
+        });
+      } catch (error) {
+        if (isMounted) {
+          setIdCardError(error.message || "Unable to render ID card preview.");
+        }
+      }
+    }
+
+    renderIdCard();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [data.candidate]);
 
   const handleFilterChange = (key, value) => {
     setPage(1);
@@ -113,6 +425,90 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
     }
   };
 
+  const handleProfileImageChange = (event) => {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      setProfileImageFile(null);
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      event.target.value = "";
+      toastAlert("error", "Invalid image", "Please choose an image file for the profile picture.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      event.target.value = "";
+      toastAlert("error", "Image too large", "Profile picture must be 2MB or smaller.");
+      return;
+    }
+
+    setProfileImageFile(file);
+  };
+
+  const clearSelectedProfileImage = () => {
+    setProfileImageFile(null);
+    setProfileImageInputKey((current) => current + 1);
+  };
+
+  const handleManagedUserUpdate = async (formValues) => {
+    try {
+      const formData = new FormData();
+
+      Object.entries(formValues).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      if (profileImageFile) {
+        formData.append("profileImage", profileImageFile);
+      }
+
+      const { data: response } = await axios.put(`/api/users/${candidateId}`, formData);
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      toastAlert("success", "Field associate updated", response.message || "Field associate updated successfully.");
+      clearSelectedProfileImage();
+      setIsEditOpen(false);
+      await refresh();
+    } catch (error) {
+      toastAlert(
+        "error",
+        "Unable to update field associate",
+        error.response?.data?.message || error.message || "Please try again."
+      );
+    }
+  };
+
+  const handleDownloadIdCard = async () => {
+    try {
+      const canvas = idCardCanvasRef.current;
+
+      if (!canvas || !data.candidate) {
+        throw new Error("ID card preview is not ready yet.");
+      }
+
+      setIsDownloadingIdCard(true);
+      const blob = await canvasToBlob(canvas, "image/png");
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+
+      anchor.href = objectUrl;
+      anchor.download = `${(data.candidate.name || "field-associate").replace(/\s+/g, "-").toLowerCase()}-id-card.png`;
+      anchor.click();
+
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch (error) {
+      toastAlert("error", "Unable to download ID card", error.message || "Please try again.");
+    } finally {
+      setIsDownloadingIdCard(false);
+    }
+  };
+
   return (
     <section className="space-y-4">
       <section className="rounded-[1.5rem] border border-border/60 bg-white/90 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-5">
@@ -126,16 +522,16 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
                 Back
               </Link>
               <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-900">
-                Candidate overview
+                Field associate overview
               </span>
               {data.candidate?.isLocked ? (
                 <span className="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-rose-900">
-                  Candidate locked
+                  Field associate locked
                 </span>
               ) : null}
             </div>
             <h2 className="mt-3 text-xl font-semibold text-foreground sm:text-2xl">
-              {data.candidate?.name || "Loading candidate"}
+              {data.candidate?.name || "Loading field associate"}
             </h2>
             {data.candidate ? (
               <div className="mt-1 space-y-1">
@@ -149,30 +545,280 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
             ) : null}
           </div>
 
-          <button
-            type="button"
-            onClick={refresh}
-            disabled={isRefreshing}
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-          >
-            {isRefreshing ? <LoaderCircle className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-            Refresh
-          </button>
-          <a
-            href={`/api/users/candidates/${candidateId}/leaders/export?${buildManagedUserFilterQueryParams(filters).toString()}`}
-            className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border/60 bg-white px-4 text-sm font-medium text-foreground transition hover:bg-muted sm:w-auto"
-          >
-            Export CSV
-          </a>
         </div>
       </section>
+
+      {data.candidate ? (
+        <section className="rounded-[1.5rem] border border-border/60 bg-white/90 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-5">
+          <div className="flex flex-col gap-5 xl:flex-row">
+            <article className="overflow-hidden rounded-[1.5rem] border border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 xl:w-[360px]">
+              <div className="border-b border-orange-100 px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-orange-700">
+                  Field associate ID card
+                </p>
+                <p className="mt-2 text-sm text-slate-600">Preview and download</p>
+              </div>
+              <div className="p-5">
+                <div className="rounded-[1.4rem] border border-orange-200 bg-white/90 p-3 shadow-sm">
+                  <canvas
+                    ref={idCardCanvasRef}
+                    width={ID_CARD_SIZE.width}
+                    height={ID_CARD_SIZE.height}
+                    className="h-auto w-full rounded-[1rem] border border-orange-100 bg-white"
+                  />
+                </div>
+                {idCardError ? (
+                  <p className="mt-3 text-sm text-destructive">{idCardError}</p>
+                ) : null}
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={handleDownloadIdCard}
+                    disabled={isDownloadingIdCard}
+                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 text-sm font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isDownloadingIdCard ? (
+                      <LoaderCircle className="size-4 animate-spin" />
+                    ) : (
+                      <Download className="size-4" />
+                    )}
+                    {isDownloadingIdCard ? "Preparing..." : "Download ID Card"}
+                  </button>
+                </div>
+              </div>
+            </article>
+
+            <article className="min-w-0 flex-1 rounded-[1.5rem] border border-border/60 bg-slate-50/70 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Full information
+              </p>
+              <h3 className="mt-2 text-lg font-semibold text-foreground">
+                All field associate details
+              </h3>
+              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {buildCandidateInfoRows(data.candidate).map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl border border-border/60 bg-white px-4 py-3 shadow-sm"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                      {item.label}
+                    </p>
+                    <p className="mt-1 break-words text-sm font-medium text-foreground">
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </div>
+        </section>
+      ) : null}
+
+      {data.candidate ? (
+        <section className="rounded-[1.5rem] border border-border/60 bg-white/90 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Manage
+              </p>
+              <h3 className="mt-2 text-lg font-semibold text-foreground">Edit field associate</h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsEditOpen((prev) => !prev)}
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground transition hover:bg-muted"
+            >
+              {isEditOpen ? "Close editor" : "Edit information"}
+            </button>
+          </div>
+
+          {isEditOpen ? (
+            <form className="mt-5 grid gap-4 md:grid-cols-2" onSubmit={handleSubmit(handleManagedUserUpdate)} noValidate>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name</label>
+                <input
+                  {...register("name")}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                />
+                {errors.name ? <p className="text-sm text-destructive">{errors.name.message}</p> : null}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email</label>
+                <input
+                  type="email"
+                  {...register("email")}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                />
+                {errors.email ? <p className="text-sm text-destructive">{errors.email.message}</p> : null}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Phone</label>
+                <input
+                  {...register("phone")}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                />
+                {errors.phone ? <p className="text-sm text-destructive">{errors.phone.message}</p> : null}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">ID No.</label>
+                <input
+                  {...register("idNo")}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                />
+                {errors.idNo ? <p className="text-sm text-destructive">{errors.idNo.message}</p> : null}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Blood Group</label>
+                <select
+                  {...register("bloodGroup")}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                >
+                  <option value="">Select blood group</option>
+                  {BLOOD_GROUP_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                {errors.bloodGroup ? <p className="text-sm text-destructive">{errors.bloodGroup.message}</p> : null}
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium">Full Address</label>
+                <input
+                  {...register("fullAddress")}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                />
+                {errors.fullAddress ? <p className="text-sm text-destructive">{errors.fullAddress.message}</p> : null}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Block</label>
+                <input
+                  {...register("block")}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                />
+                {errors.block ? <p className="text-sm text-destructive">{errors.block.message}</p> : null}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">District</label>
+                <select
+                  {...register("district")}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                >
+                  <option value="">Select district</option>
+                  {BIHAR_DISTRICTS.map((district) => (
+                    <option key={district} value={district}>
+                      {district}
+                    </option>
+                  ))}
+                </select>
+                {errors.district ? <p className="text-sm text-destructive">{errors.district.message}</p> : null}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Assembly Constituency</label>
+                <select
+                  {...register("vidhansabha")}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                >
+                  <option value="">{selectedDistrict ? "Select vidhansabha" : "Select district first"}</option>
+                  {vidhansabhaOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                {errors.vidhansabha ? <p className="text-sm text-destructive">{errors.vidhansabha.message}</p> : null}
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium">Profile Picture</label>
+                <div className="rounded-[1.4rem] border border-orange-200 bg-white/90 p-4">
+                  <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-3 rounded-[1.2rem] border border-dashed border-orange-300 bg-orange-50/60 px-4 py-6 text-center transition hover:bg-orange-100/70">
+                    <ImagePlus className="size-7 text-orange-600" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Choose profile picture</p>
+                      <p className="mt-1 text-xs text-slate-600">JPG, PNG, or WEBP up to 2MB.</p>
+                    </div>
+                    <input
+                      key={profileImageInputKey}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleProfileImageChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                {profileImageFile ? (
+                  <div className="overflow-hidden rounded-[1.25rem] border border-orange-200 bg-white shadow-sm">
+                    <div className="relative aspect-[4/3] bg-slate-100">
+                      <Image
+                        src={profileImagePreviewUrl}
+                        alt="Profile preview"
+                        fill
+                        unoptimized
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3 p-3">
+                      <div>
+                        <p className="truncate text-sm font-medium text-slate-900">{profileImageFile.name}</p>
+                        <p className="mt-1 text-xs text-slate-500">{Math.max(1, Math.round(profileImageFile.size / 1024))} KB</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearSelectedProfileImage}
+                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-white px-4 text-sm font-medium text-foreground transition hover:bg-accent"
+                      >
+                        <X className="size-4" />
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex gap-3 md:col-span-2">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 text-sm font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
+                  {isSubmitting ? "Saving..." : "Save changes"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (data.candidate) {
+                      reset({
+                        name: data.candidate.name || "",
+                        email: data.candidate.email || "",
+                        phone: data.candidate.phone || "",
+                        idNo: data.candidate.idNo || "",
+                        bloodGroup: data.candidate.bloodGroup || "",
+                        fullAddress: data.candidate.fullAddress || "",
+                        block: data.candidate.block || "",
+                        district: data.candidate.district || "",
+                        vidhansabha: data.candidate.vidhansabha || "",
+                      });
+                    }
+                    clearSelectedProfileImage();
+                    setIsEditOpen(false);
+                  }}
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-border/60 bg-background px-5 text-sm font-medium text-foreground transition hover:bg-muted"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="rounded-[1.5rem] border border-border/60 bg-white/90 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-5">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             Overview
           </p>
-          <h3 className="mt-2 text-lg font-semibold text-foreground">Individual candidate summary</h3>
+          <h3 className="mt-2 text-lg font-semibold text-foreground">Individual field associate summary</h3>
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -298,9 +944,26 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
       <section className="rounded-[1.5rem] border border-border/60 bg-white/90 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-5">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-lg font-semibold text-foreground">Leaders</h3>
-          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">
-            {data.counts?.leaders ?? 0} total
-          </span>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">
+              {data.counts?.leaders ?? 0} total
+            </span>
+            <button
+              type="button"
+              onClick={refresh}
+              disabled={isRefreshing}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isRefreshing ? <LoaderCircle className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+              Refresh
+            </button>
+            <a
+              href={`/api/users/candidates/${candidateId}/leaders/export?${buildManagedUserFilterQueryParams(filters).toString()}`}
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-border/60 bg-white px-4 text-sm font-medium text-foreground transition hover:bg-muted"
+            >
+              Export CSV
+            </a>
+          </div>
         </div>
 
         <ManagedUserFilters
@@ -313,7 +976,7 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
           }}
           resultCount={data.pagination?.itemCount ?? data.leaders?.length ?? 0}
           totalCount={data.pagination?.totalItems ?? data.leaders?.length ?? 0}
-          searchPlaceholder="Name | Phone | Block"
+          searchPlaceholder="Name | Phone | Id No | Block"
         />
 
         {isLoading ? (

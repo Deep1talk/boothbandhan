@@ -9,8 +9,8 @@ import {
 export default function CandidateDashboardLayoutShell({ session, children }) {
   return (
     <RoleDashboardShell
-      badge="Candidate panel"
-      title="Candidate workspace"
+      badge="Field Associate panel"
+      title="Field Associate workspace"
       session={session}
       profileHref={CANDIDATE_PROFILE}
       navigation={[
@@ -25,6 +25,7 @@ export default function CandidateDashboardLayoutShell({ session, children }) {
         { label: "Leaders", href: CANDIDATE_LEADERS, icon: "list" },
       ]}
       mobileFullWidthTopSections
+      notificationAccent="sky"
       sidePanel={[]}
       accent={{
         shell: "bg-[linear-gradient(180deg,_#f6fbff_0%,_#fbfeff_40%,_#ffffff_100%)]",

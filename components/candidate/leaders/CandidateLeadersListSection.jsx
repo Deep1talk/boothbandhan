@@ -14,6 +14,7 @@ import ManagedUserFilters from "@/components/shared/filters/ManagedUserFilters";
 import PaginationControls from "@/components/shared/filters/PaginationControls";
 import {
   confirmLeaderRegistrationPayment,
+  confirmLeaderCashPayment,
   createLeaderRegistrationPaymentOrder,
 } from "@/lib/client/usersClient";
 import { toastAlert } from "@/lib/toastAlert";
@@ -76,10 +77,12 @@ export default function CandidateLeadersListSection({
   onRefresh,
 }) {
   const [payingLeaderId, setPayingLeaderId] = useState("");
+  const [paymentLeader, setPaymentLeader] = useState(null);
 
-  const handlePayNow = async (leader) => {
+  const handleOnlinePayment = async (leader) => {
     try {
       setPayingLeaderId(leader.id);
+      setPaymentLeader(null);
       const isLoaded = await loadRazorpayCheckout();
 
       if (!isLoaded) {
@@ -133,6 +136,28 @@ export default function CandidateLeadersListSection({
     }
   };
 
+  const handleCashPayment = async (leader) => {
+    try {
+      setPayingLeaderId(leader.id);
+      const response = await confirmLeaderCashPayment(leader.id);
+      toastAlert(
+        "success",
+        response.message || "Cash payment recorded successfully."
+      );
+      setPaymentLeader(null);
+      await onRefresh?.();
+    } catch (error) {
+      toastAlert(
+        "error",
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to record cash payment."
+      );
+    } finally {
+      setPayingLeaderId("");
+    }
+  };
+
   return (
     <section
       id="leader-list"
@@ -178,7 +203,7 @@ export default function CandidateLeadersListSection({
         onClear={onClearFilters}
         resultCount={pagination?.itemCount ?? leaders?.length ?? 0}
         totalCount={pagination?.totalItems ?? leaders?.length ?? 0}
-        searchPlaceholder="Name | Phone | Block"
+        searchPlaceholder="Name | Phone | Id No | Block"
       />
 
       <div className="mt-6 space-y-3">
@@ -311,7 +336,7 @@ export default function CandidateLeadersListSection({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => handlePayNow(leader)}
+                      onClick={() => setPaymentLeader(leader)}
                       disabled={payingLeaderId === leader.id}
                       className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto"
                     >
@@ -335,6 +360,62 @@ export default function CandidateLeadersListSection({
       </div>
 
       <PaginationControls pagination={pagination} onPageChange={onPageChange} />
+
+      {paymentLeader ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
+          <div className="w-full max-w-md rounded-[1.5rem] border border-border/60 bg-white p-6 shadow-[0_20px_80px_rgba(15,23,42,0.2)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Complete payment
+            </p>
+            <h3 className="mt-2 text-xl font-semibold text-foreground">
+              Choose payment method
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Select how you want to complete payment for{" "}
+              <span className="font-semibold text-foreground">
+                {paymentLeader.name}
+              </span>
+              .
+            </p>
+
+            <div className="mt-5 grid gap-3">
+              <button
+                type="button"
+                onClick={() => handleOnlinePayment(paymentLeader)}
+                disabled={payingLeaderId === paymentLeader.id}
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {payingLeaderId === paymentLeader.id
+                  ? "Starting payment..."
+                  : "Online Payment"}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCashPayment(paymentLeader)}
+                disabled={payingLeaderId === paymentLeader.id}
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-border/60 bg-white px-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {payingLeaderId === paymentLeader.id
+                  ? "Processing..."
+                  : "Cash Payment"}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!payingLeaderId) {
+                  setPaymentLeader(null);
+                }
+              }}
+              disabled={Boolean(payingLeaderId)}
+              className="mt-4 inline-flex w-full items-center justify-center rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
