@@ -9,6 +9,8 @@ import {
 import FestivalTemplateModel from "@/models/festivalTemplateSchema";
 import UserModel from "@/models/userSchema";
 
+export const dynamic = "force-dynamic";
+
 export default async function LeaderGreetingsPage() {
   const { session } = await getCurrentUser();
 

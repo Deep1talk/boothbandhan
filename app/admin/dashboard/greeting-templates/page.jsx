@@ -3,6 +3,8 @@ import { connectDB } from "@/lib/connectDB";
 import { normalizeFestivalTemplate } from "@/lib/posters";
 import FestivalTemplateModel from "@/models/festivalTemplateSchema";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminGreetingTemplatesPage() {
   await connectDB();
 
