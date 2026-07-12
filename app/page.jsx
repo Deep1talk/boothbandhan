@@ -75,6 +75,26 @@ const content = {
     onGroundExecution: "जमीनी क्रियान्वयन",
     onGroundText:
       "रणनीति, सेवा पहुंच, नागरिक सहभागिता और बूथ सशक्तिकरण को एक ही मिशन डैशबोर्ड में जोड़ा जाता है।",
+    heroSlides: [
+      {
+        title: "बिहार का राजनीतिक मानचित्र",
+        description: "जिले, क्षेत्र और बूथ स्तर की योजना को एक स्पष्ट विजुअल दिशा मिलती है।",
+        image: "/assests/images/bihar-map.webp",
+        alt: "Map of Bihar",
+      },
+      {
+        title: "बिहार विधानसभा की दृष्टि",
+        description: "243 विधानसभा क्षेत्रों को ध्यान में रखकर संगठन और अभियान संरचना तैयार की जाती है।",
+        image: "/assests/images/bihar-vidhan-sbha.webp",
+        alt: "Bihar Vidhan Sabha building",
+      },
+      {
+        title: "जमीनी नेतृत्व और क्रियान्वयन",
+        description: "संगठन, सेवा और बूथ प्रबंधन को एक ही मिशन फ्रेम में जोड़ा जाता है।",
+        image: "/assests/images/hero_home_20260709.webp",
+        alt: "Booth Bandhan community leadership",
+      },
+    ],
     initiativesEyebrow: "हमारी पहल",
     initiativesTitle: "चुनाव से लेकर जनसेवा तक एक समेकित सहयोग व्यवस्था",
     initiativesText:
@@ -127,8 +147,9 @@ const content = {
     stepChip: "स्टेप",
     founderRole: "संस्थापक एवं मुख्य कार्यकारी अधिकारी",
     contactCards: [
-      { title: "क्षेत्र कार्यालय", detail: "बिहार, भारत", icon: Building2 },
-      { title: "कॉल / व्हाट्सऐप", detail: "+91 771-735-9980", icon: Phone },
+      { title: "क्षेत्र कार्यालय", detail: "सुगौली, पूर्वी चंपारण, बिहार - 845456", icon: Building2 },
+      { title: "मुख्य कार्यालय", detail: "बोरिंग कैनाल रोड, पंचमुखी हनुमान मंदिर के पास, पटना, बिहार - 800001", icon: Building2 },
+      { title: "कॉल / व्हाट्सऐप", detail: "+91 7070099949", icon: Phone },
       { title: "अभियान सहयोग", detail: "boothbandhan@gmail.com", icon: MessageCircleMore },
     ],
     initiatives: [
@@ -189,7 +210,7 @@ const content = {
     stats: [
       { value: "150+", label: "राजनीतिक प्रोजेक्ट", detail: "बिहार भर में क्रियान्वित" },
       { value: "5000+", label: "योजना बद्ध बूथ", detail: "वैज्ञानिक बूथ मैपिंग" },
-      { value: "50+", label: "पेशेवर टीम", detail: "फुल-टाइम रणनीतिकार" },
+      { value: "500+", label: "पेशेवर टीम", detail: "फुल-टाइम रणनीतिकार" },
       { value: "24×7", label: "वार रूम सपोर्ट", detail: "रियल-टाइम मॉनिटरिंग" },
     ],
     services: [
@@ -239,7 +260,7 @@ const content = {
     },
     login: "Log In",
     heroBadge: "Service and organization from booth to Bharat",
-    heroTitleTop: "Welcome To Booth Bandhan Pvt. ltd.",
+    heroTitleTop: "Welcome To Booth Bandhan Pvt. Ltd.",
     heroTitleAccent: "",
     heroTitleBottom: "",
     heroText:
@@ -249,6 +270,26 @@ const content = {
     onGroundExecution: "On-ground execution",
     onGroundText:
       "Strategy, service outreach, citizen engagement, and booth strengthening are aligned inside one mission dashboard.",
+    heroSlides: [
+      {
+        title: "Bihar political map",
+        description: "District, constituency, and booth planning starts with a clear statewide view.",
+        image: "/assests/images/bihar-map.webp",
+        alt: "Map of Bihar",
+      },
+      {
+        title: "Bihar Vidhan Sabha vision",
+        description: "Campaign structure and organisation planning stay aligned with all 243 Assembly seats.",
+        image: "/assests/images/bihar-vidhan-sbha.webp",
+        alt: "Bihar Vidhan Sabha building",
+      },
+      {
+        title: "Grassroots leadership in motion",
+        description: "Organisation, service outreach, and booth management are connected in one mission framework.",
+        image: "/assests/images/hero_home_20260709.webp",
+        alt: "Booth Bandhan community leadership",
+      },
+    ],
     initiativesEyebrow: "Our initiatives",
     initiativesTitle: "An integrated support system from elections to public service",
     initiativesText:
@@ -292,8 +333,9 @@ const content = {
     helpDesk: "Help Desk",
     founderRole: "Founder & CEO",
     contactCards: [
-      { title: "Regional Office", detail: "Bihar, India", icon: Building2 },
-      { title: "Call / WhatsApp", detail: "+91 771-735-9980", icon: Phone },
+      { title: "Regional Office", detail: "Sugauli, East Champaran, Bihar - 845456", icon: Building2 },
+      { title: "Main Office", detail: "Boaring Canal Road, Near Panchmukhi Hanuman Mandir, Patna, Bihar - 800001", icon: Building2 },
+      { title: "Call / WhatsApp", detail: "+91 7070099949", icon: Phone },
       { title: "Campaign Support", detail: "boothbandhan@gmail.com", icon: MessageCircleMore },
     ],
     dock: {
@@ -364,7 +406,7 @@ const content = {
     stats: [
       { value: "150+", label: "Political Projects", detail: "Delivered across Bihar" },
       { value: "5000+", label: "Booths Planned", detail: "Scientific booth mapping" },
-      { value: "50+", label: "Professional Team", detail: "Full-time strategists" },
+      { value: "500+", label: "Professional Team", detail: "Full-time strategists" },
       { value: "24×7", label: "War Room Support", detail: "Real-time monitoring" },
     ],
     services: [
@@ -417,6 +459,8 @@ const sectionLabels = {
     whatWeOffer: "What We Offer",
     quickLinks: "Quick Links",
     ourInitiatives: "Our Initiatives",
+    socialTitle: "Follow Booth Bandhan",
+    socialText: "Stay connected with our latest updates, campaigns, and public outreach.",
     contactUs: "Contact Us",
     footerTitle: "Let's Build a Stronger",
     footerTagline: "Empowering Wards. Strengthening Democracy.",
@@ -436,6 +480,8 @@ const sectionLabels = {
     whatWeOffer: "हम क्या देते हैं",
     quickLinks: "त्वरित लिंक",
     ourInitiatives: "हमारी पहल",
+    socialTitle: "बूथ बंधन से जुड़ें",
+    socialText: "हमारे नवीनतम अपडेट, अभियान और जनसंपर्क गतिविधियों से जुड़े रहें।",
     contactUs: "संपर्क करें",
     footerTitle: "आइए एक मजबूत",
     footerTagline: "वार्ड बनाएं, लोकतंत्र मजबूत करें।",
@@ -447,10 +493,13 @@ const sectionLabels = {
 
 export default function Page() {
   const [showTopBar, setShowTopBar] = useState(true);
-  const { language, setLanguage, toggleLanguage } = useLanguage();
+  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
+  const { language, toggleLanguage } = useLanguage();
   const lastScrollY = useRef(0);
   const copy = content[language];
   const labels = sectionLabels[language] || sectionLabels.en;
+  const heroSlides = copy.heroSlides || [];
+  const currentHeroSlide = heroSlides.length ? activeHeroSlide % heroSlides.length : 0;
   const navigationItems = [
     { label: copy.nav.programs, href: "#programs" },
     { label: copy.nav.process, href: "#process" },
@@ -461,10 +510,6 @@ export default function Page() {
   ];
   const heroHighlights = copy.values.slice(0, 4);
   const supportHighlights = copy.focusAreas || [];
-
-  useEffect(() => {
-    setLanguage("hi");
-  }, [setLanguage]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -488,6 +533,20 @@ export default function Page() {
     };
   }, []);
 
+  useEffect(() => {
+    if (heroSlides.length <= 1) {
+      return undefined;
+    }
+
+    const slideInterval = window.setInterval(() => {
+      setActiveHeroSlide((currentSlide) => (currentSlide + 1) % heroSlides.length);
+    }, 3500);
+
+    return () => {
+      window.clearInterval(slideInterval);
+    };
+  }, [heroSlides.length]);
+
   return (
     <main
       id="top"
@@ -502,11 +561,11 @@ export default function Page() {
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-1.5 text-xs sm:px-6 sm:text-sm lg:flex-row lg:items-center lg:justify-between">
             <div className="hidden flex-wrap items-center gap-x-5 gap-y-2 sm:flex">
               <a
-                href="tel:+917717359980"
+                href="tel:+917070099949"
                 className="inline-flex items-center gap-2 transition hover:text-orange-50"
               >
                 <Phone className="h-3.5 w-3.5" />
-                <span>+91 7717359980</span>
+                <span>+91 7070099949</span>
               </a>
               <a
                 href="mailto:boothbandhan@gmail.com"
@@ -628,7 +687,7 @@ export default function Page() {
 
               <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                 <Link
-                  href="#programs"
+                  href="/auth/register"
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0d5c45] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_18px_36px_-20px_rgba(13,92,69,0.7)] transition hover:bg-[#0a4a38]"
                 >
                   {labels.joinMovement}
@@ -668,15 +727,29 @@ export default function Page() {
               <div className="absolute inset-y-12 left-4 hidden w-6 rounded-full bg-orange-500 lg:block" />
               <div className="absolute inset-y-6 left-8 hidden w-5 rounded-full bg-[#0d5c45] lg:block" />
               <div className="relative overflow-hidden rounded-[2.3rem] border border-[#e6e3dc] bg-white p-3 shadow-[0_36px_100px_-42px_rgba(15,23,42,0.42)] lg:ml-10">
-                <div className="relative overflow-hidden rounded-[1.8rem]">
-                  <Image
-                    src="/assests/images/hero_home_20260709.webp"
-                    alt="Booth Bandhan community leadership"
-                    width={1024}
-                    height={1024}
-                    priority
-                    className="h-full min-h-[360px] w-full object-cover"
-                  />
+                <div className="relative aspect-square w-full overflow-hidden rounded-[1.8rem] bg-[#eff4ef]">
+                  {heroSlides.map((slide, index) => (
+                    <div
+                      key={slide.image}
+                      className={`absolute inset-0 transition-opacity duration-700 ${
+                        currentHeroSlide === index ? "opacity-100" : "pointer-events-none opacity-0"
+                      }`}
+                    >
+                      <Image
+                        src={slide.image}
+                        alt={slide.alt}
+                        fill
+                        priority={index === 0}
+                        sizes="(max-width: 1024px) 100vw, 42vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+
+                  <div className="absolute right-4 top-4 rounded-full border border-white/35 bg-[#0b3b31]/70 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-white backdrop-blur sm:right-6 sm:top-6">
+                    {String(currentHeroSlide + 1).padStart(2, "0")} / {String(heroSlides.length).padStart(2, "0")}
+                  </div>
+
                   <div className="absolute inset-x-4 bottom-4 rounded-[1.5rem] border border-white/35 bg-[#0b3b31]/82 p-4 text-white backdrop-blur sm:inset-x-6 sm:p-5">
                     <div className="flex items-start gap-3">
                       <div className="rounded-2xl bg-orange-400/20 p-3 text-orange-200">
@@ -684,12 +757,28 @@ export default function Page() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-orange-200">
-                          {copy.onGroundExecution}
+                          {heroSlides[currentHeroSlide]?.title || copy.onGroundExecution}
                         </p>
                         <p className="mt-2 text-sm leading-6 text-slate-100/90">
-                          {copy.onGroundText}
+                          {heroSlides[currentHeroSlide]?.description || copy.onGroundText}
                         </p>
                       </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-2">
+                      {heroSlides.map((slide, index) => (
+                        <button
+                          key={slide.image}
+                          type="button"
+                          aria-label={`Show slide ${index + 1}`}
+                          onClick={() => setActiveHeroSlide(index)}
+                          className={`h-2.5 rounded-full transition-all ${
+                            currentHeroSlide === index
+                              ? "w-10 bg-orange-300"
+                              : "w-2.5 bg-white/55 hover:bg-white/75"
+                          }`}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -766,7 +855,7 @@ export default function Page() {
             </p>
             <div className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-slate-100">
               <Phone className="h-4 w-4 text-orange-300" />
-              <span>7279998880</span>
+              <span>+91 7279998880</span>
             </div>
           </div>
 
@@ -776,7 +865,7 @@ export default function Page() {
               alt="Founder portrait"
               fill
               sizes="(max-width: 1024px) 100vw, 33vw"
-              className="object-cover"
+              className="object-contain object-top lg:object-cover"
             />
           </div>
 
@@ -943,6 +1032,37 @@ export default function Page() {
         </div>
       </section>
 
+      <section className="border-y border-orange-200/70 bg-[linear-gradient(135deg,_#fff7ef_0%,_#fff0e1_45%,_#fff9f4_100%)]">
+        <div className="mx-auto max-w-7xl px-3 py-10 sm:px-6 sm:py-12">
+          <div className="rounded-[2rem] border border-orange-200 bg-white/70 px-6 py-8 text-center shadow-[0_28px_70px_-48px_rgba(249,115,22,0.45)] backdrop-blur">
+            <p className="text-sm font-bold uppercase tracking-[0.26em] text-orange-500">
+              {labels.socialTitle}
+            </p>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+              {labels.socialText}
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+            {socialLinks.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  aria-label={item.label}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-16 w-16 items-center justify-center rounded-[1.4rem] border border-orange-200 bg-white text-[#0d5c45] shadow-[0_22px_45px_-28px_rgba(15,23,42,0.35)] transition hover:-translate-y-1 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-500"
+                >
+                  <Icon className="h-6 w-6" />
+                </a>
+              );
+            })}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section
         id="contact"
         className="bg-[linear-gradient(180deg,_#0d5c45_0%,_#083428_100%)] text-white"
@@ -960,7 +1080,7 @@ export default function Page() {
             </p>
           </div>
 
-          <div className="mt-12 grid gap-5 md:grid-cols-3">
+          <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {copy.contactCards.map((item) => {
               const Icon = item.icon;
 
@@ -975,7 +1095,7 @@ export default function Page() {
                   <p className="mt-5 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
                     {item.title}
                   </p>
-                  <p className="mt-2 text-lg font-bold text-white">
+                  <p className="mt-2 text-base font-bold leading-7 text-white">
                     {item.detail}
                   </p>
                 </div>

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import axios from "axios";
-import { AlertCircle, ClipboardList, LoaderCircle } from "lucide-react";
+import { AlertCircle, ClipboardList, Download, LoaderCircle } from "lucide-react";
 import { HELP_DESK_ISSUE_OPTIONS } from "@/lib/helpDeskOptions";
 import { toastAlert } from "@/lib/toastAlert";
 
@@ -78,19 +78,28 @@ export default function AdminLeaderProblemsPanel({ leaderId, leaderName }) {
             Admin-only problem entries for {leaderName}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleToggle}
-          disabled={isLoading}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isLoading ? (
-            <LoaderCircle className="size-4 animate-spin" />
-          ) : (
-            <ClipboardList className="size-4" />
-          )}
-          {isOpen ? "Hide Problems" : "Show Problems"}
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <a
+            href={`/api/help-desk/leaders/${leaderId}/problems/export`}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100"
+          >
+            <Download className="size-4" />
+            Download CSV
+          </a>
+          <button
+            type="button"
+            onClick={handleToggle}
+            disabled={isLoading}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? (
+              <LoaderCircle className="size-4 animate-spin" />
+            ) : (
+              <ClipboardList className="size-4" />
+            )}
+            {isOpen ? "Hide Problems" : "Show Problems"}
+          </button>
+        </div>
       </div>
 
       {isOpen ? (

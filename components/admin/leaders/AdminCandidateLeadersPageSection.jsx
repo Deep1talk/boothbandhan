@@ -22,6 +22,12 @@ import {
 import { toastAlert } from "@/lib/toastAlert";
 import { zodAdminUpdateManagedUserSchema } from "@/lib/zodSchema";
 
+const ADMIN_LEADER_STATUS_OPTIONS = [
+  { value: "Locked", label: "Locked" },
+  { value: "Paid", label: "Paid" },
+  { value: "Pending", label: "Pending" },
+];
+
 function formatDate(value) {
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
@@ -969,6 +975,8 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
         <ManagedUserFilters
           title="Leader filters"
           filters={filters}
+          showBloodGroup={false}
+          statusOptions={ADMIN_LEADER_STATUS_OPTIONS}
           onChange={handleFilterChange}
           onClear={() => {
             setPage(1);
@@ -976,7 +984,7 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
           }}
           resultCount={data.pagination?.itemCount ?? data.leaders?.length ?? 0}
           totalCount={data.pagination?.totalItems ?? data.leaders?.length ?? 0}
-          searchPlaceholder="Name | Phone | Id No | Block"
+          searchPlaceholder="Name | Phone | Block"
         />
 
         {isLoading ? (

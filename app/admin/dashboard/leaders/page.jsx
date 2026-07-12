@@ -1,5 +1,5 @@
 import AdminLeadersPageSection from "@/components/admin/leaders/AdminLeadersPageSection";
 
-export default function AdminDirectLeadersPage() {
+export default function AdminLeadersPage() {
   return <AdminLeadersPageSection />;
 }

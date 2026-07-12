@@ -19,6 +19,12 @@ import {
 } from "@/lib/client/usersClient";
 import { toastAlert } from "@/lib/toastAlert";
 
+const LEADER_STATUS_OPTIONS = [
+  { value: "Locked", label: "Locked" },
+  { value: "Paid", label: "Paid" },
+  { value: "Pending", label: "Pending" },
+];
+
 function formatDate(value) {
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
@@ -199,11 +205,13 @@ export default function CandidateLeadersListSection({
       <ManagedUserFilters
         title="Leader filters"
         filters={filters}
+        showBloodGroup={false}
+        statusOptions={LEADER_STATUS_OPTIONS}
         onChange={onFilterChange}
         onClear={onClearFilters}
         resultCount={pagination?.itemCount ?? leaders?.length ?? 0}
         totalCount={pagination?.totalItems ?? leaders?.length ?? 0}
-        searchPlaceholder="Name | Phone | Id No | Block"
+        searchPlaceholder="Name | Phone | Block"
       />
 
       <div className="mt-6 space-y-3">

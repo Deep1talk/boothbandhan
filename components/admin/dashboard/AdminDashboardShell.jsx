@@ -4,9 +4,9 @@ import {
   ADMIN_CANDIDATES,
   ADMIN_CREATE_CANDIDATE,
   ADMIN_DASHBOARD,
-  ADMIN_DIRECT_LEADERS,
   ADMIN_GALLERY,
   ADMIN_GREETING_TEMPLATES,
+  ADMIN_LEADERS,
   ADMIN_PROFILE,
 } from "@/routes/adminpanelRoutes";
 
@@ -21,7 +21,7 @@ export default function AdminDashboardLayoutShell({ session, children }) {
         { label: "Overview", href: ADMIN_DASHBOARD, icon: "overview" },
         { label: "Create Field Associate", href: ADMIN_CREATE_CANDIDATE, icon: "add" },
         { label: "Field Associates", href: ADMIN_CANDIDATES, icon: "list" },
-        { label: "Direct Leaders", href: ADMIN_DIRECT_LEADERS, icon: "user" },
+        { label: "Leaders", href: ADMIN_LEADERS, icon: "user" },
         { label: "Greeting Templates", href: ADMIN_GREETING_TEMPLATES, icon: "poster" },
         { label: "Gallery", href: ADMIN_GALLERY, icon: "gallery" },
         { label: "Announcements", href: ADMIN_ANNOUNCEMENTS, icon: "bell" },
@@ -30,7 +30,7 @@ export default function AdminDashboardLayoutShell({ session, children }) {
         { label: "Overview", href: ADMIN_DASHBOARD, icon: "overview" },
         { label: "Create Field Associate", href: ADMIN_CREATE_CANDIDATE, icon: "add" },
         { label: "Field Associates", href: ADMIN_CANDIDATES, icon: "list" },
-        { label: "Direct Leaders", href: ADMIN_DIRECT_LEADERS, icon: "user" },
+        { label: "Leaders", href: ADMIN_LEADERS, icon: "user" },
       ]}
       sidePanel={[]}
       accent={{

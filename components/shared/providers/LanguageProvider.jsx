@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 const LanguageContext = createContext({
-  language: "hi",
+  language: "en",
   setLanguage: () => {},
   toggleLanguage: () => {},
 });
@@ -11,11 +11,11 @@ const LanguageContext = createContext({
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(() => {
     if (typeof window === "undefined") {
-      return "hi";
+      return "en";
     }
 
     const savedLanguage = window.localStorage.getItem("bb-language");
-    return savedLanguage === "en" ? "en" : "hi";
+    return savedLanguage === "hi" ? "hi" : "en";
   });
 
   useEffect(() => {

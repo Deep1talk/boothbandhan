@@ -10,7 +10,12 @@ import {
 
 export default function ManagedUserFilters({
   title = "Filters",
-  searchPlaceholder = "Name | Phone | Id No | Block",
+  searchPlaceholder = "Name | Phone | Block",
+  statusOptions = [
+    { value: "Active", label: "Active" },
+    { value: "Pending", label: "Pending" },
+  ],
+  showBloodGroup = true,
   filters,
   onChange,
   onClear,
@@ -102,8 +107,11 @@ export default function ManagedUserFilters({
                 className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
               >
                 <option value="">All status</option>
-                <option value="Active">Active</option>
-                <option value="Pending">Pending</option>
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -153,21 +161,23 @@ export default function ManagedUserFilters({
               </div>
             </label>
 
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">Blood Group</span>
-              <select
-                value={filters.bloodGroup}
-                onChange={(event) => onChange("bloodGroup", event.target.value)}
-                className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
-              >
-                <option value="">All blood groups</option>
-                {BLOOD_GROUP_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {showBloodGroup ? (
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Blood Group</span>
+                <select
+                  value={filters.bloodGroup}
+                  onChange={(event) => onChange("bloodGroup", event.target.value)}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                >
+                  <option value="">All blood groups</option>
+                  {BLOOD_GROUP_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
           </div>
         </div>
       ) : null}

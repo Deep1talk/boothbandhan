@@ -7,6 +7,13 @@ import ManagedUserFilters from "@/components/shared/filters/ManagedUserFilters";
 import PaginationControls from "@/components/shared/filters/PaginationControls";
 import { getAdminCandidateLeadersRoute, getAdminCandidateOverviewRoute } from "@/routes/adminpanelRoutes";
 
+const ADMIN_CANDIDATE_STATUS_OPTIONS = [
+  { value: "Active", label: "Active" },
+  { value: "Pending", label: "Pending" },
+  { value: "Locked", label: "Locked" },
+  { value: "Verified", label: "Verified" },
+];
+
 function formatDate(value) {
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
@@ -72,6 +79,7 @@ export default function AdminCandidatesListSection({
       <ManagedUserFilters
         title="Field Associate filters"
         filters={filters}
+        statusOptions={ADMIN_CANDIDATE_STATUS_OPTIONS}
         onChange={onFilterChange}
         onClear={onClearFilters}
         resultCount={pagination?.itemCount ?? candidates?.length ?? 0}

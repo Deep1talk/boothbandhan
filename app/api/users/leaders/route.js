@@ -1,7 +1,7 @@
 import { errorResponse, successResponse } from "@/lib/helper";
 import { parseManagedUserListParams } from "@/lib/managedUserFilters";
 import { requireRequestUser } from "@/lib/server/requestUser";
-import { getLeadersForCandidate } from "@/lib/users/queries";
+import { getLeadersForAdmin, getLeadersForCandidate } from "@/lib/users/queries";
 
 export async function GET(req) {
   try {
@@ -13,16 +13,25 @@ export async function GET(req) {
 
     const { user } = auth;
 
-    if (user.role !== "Candidate") {
-      return errorResponse(403, "Only candidates can view their leaders");
+    if (user.role === "Candidate") {
+      const options = parseManagedUserListParams(req.nextUrl.searchParams);
+      const data = await getLeadersForCandidate(user.id, options);
+
+      return successResponse(200, "Leaders fetched successfully", {
+        ...data,
+      });
     }
 
-    const options = parseManagedUserListParams(req.nextUrl.searchParams);
-    const data = await getLeadersForCandidate(user.id, options);
+    if (user.role === "Admin") {
+      const options = parseManagedUserListParams(req.nextUrl.searchParams);
+      const data = await getLeadersForAdmin(user.id, options);
 
-    return successResponse(200, "Leaders fetched successfully", {
-      ...data,
-    });
+      return successResponse(200, "Leaders fetched successfully", {
+        ...data,
+      });
+    }
+
+    return errorResponse(403, "Only candidates and admins can view leaders");
   } catch (error) {
     return errorResponse(500, error?.message || "Internal server error");
   }

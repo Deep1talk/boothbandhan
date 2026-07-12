@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Images, LoaderCircle } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, Images, LoaderCircle, X } from "lucide-react";
 import { useLanguage } from "@/components/shared/providers/LanguageProvider";
 import { useRemoteData } from "@/hooks/useRemoteData";
 import { getGalleryImages } from "@/lib/client/galleryClient";
@@ -29,6 +30,7 @@ const COPY = {
 export default function HomeGallerySection() {
   const { language } = useLanguage();
   const copy = COPY[language] || COPY.en;
+  const [selectedImage, setSelectedImage] = useState(null);
   const { data, isLoading } = useRemoteData(
     () =>
       getGalleryImages({
@@ -76,16 +78,22 @@ export default function HomeGallerySection() {
                   index === 0 ? "md:col-span-2 xl:col-span-1" : ""
                 }`}
               >
-                <div className="relative aspect-[4/3] overflow-hidden rounded-[1.2rem] bg-slate-100">
-                  <Image
-                    src={image.imageUrl}
-                    alt="Booth Bandhan gallery"
-                    fill
-                    sizes="(max-width: 1279px) 100vw, 25vw"
-                    className="object-cover transition duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/35 via-transparent to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedImage(image)}
+                  className="block w-full text-left"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-[1.2rem] bg-slate-100">
+                    <Image
+                      src={image.imageUrl}
+                      alt="Booth Bandhan gallery"
+                      fill
+                      sizes="(max-width: 1279px) 100vw, 25vw"
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/35 via-transparent to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
+                  </div>
+                </button>
               </article>
             ))}
           </div>
@@ -106,6 +114,36 @@ export default function HomeGallerySection() {
           {copy.empty}
         </div>
       )}
+
+      {selectedImage ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div
+            className="relative w-full max-w-5xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setSelectedImage(null)}
+              aria-label="Close preview"
+              className="absolute right-3 top-3 z-10 inline-flex size-11 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-lg transition hover:bg-white"
+            >
+              <X className="size-5" />
+            </button>
+            <div className="relative aspect-[16/10] overflow-hidden rounded-[1.75rem] bg-slate-950 shadow-[0_30px_90px_rgba(15,23,42,0.45)]">
+              <Image
+                src={selectedImage.imageUrl}
+                alt="Booth Bandhan gallery preview"
+                fill
+                sizes="100vw"
+                className="object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
       </div>
     </section>
   );
