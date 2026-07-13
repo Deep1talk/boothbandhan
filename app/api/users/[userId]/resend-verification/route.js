@@ -1,0 +1,65 @@
+import { connectDB } from "@/lib/connectDB";
+import { errorResponse, successResponse } from "@/lib/helper";
+import { requireRequestUser } from "@/lib/server/requestUser";
+import { sendVerificationEmailToUser } from "@/lib/userCreation";
+import UserModel from "@/models/userSchema";
+
+async function findResendTarget(actor, userId) {
+  if (actor.role === "Admin") {
+    return UserModel.findOne({
+      _id: userId,
+      role: "Candidate",
+      parentId: actor.id,
+    }).select("_id name email role isEmailVerified");
+  }
+
+  if (actor.role === "Candidate") {
+    return UserModel.findOne({
+      _id: userId,
+      role: "Leader",
+      parentId: actor.id,
+    }).select("_id name email role isEmailVerified");
+  }
+
+  return null;
+}
+
+export async function POST(req, { params }) {
+  try {
+    const auth = await requireRequestUser(req, ["Admin", "Candidate"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
+    await connectDB();
+
+    const { user } = auth;
+    const { userId } = await params;
+    const targetUser = await findResendTarget(user, userId);
+
+    if (!targetUser) {
+      return errorResponse(404, "User not found");
+    }
+
+    if (targetUser.isEmailVerified) {
+      return errorResponse(400, "Email is already verified");
+    }
+
+    const mailResult = await sendVerificationEmailToUser(targetUser);
+
+    if (!mailResult.success) {
+      return errorResponse(500, "Unable to send verification email");
+    }
+
+    return successResponse(200, `Verification email sent to ${targetUser.email}`, {
+      user: {
+        id: targetUser._id.toString(),
+        email: targetUser.email,
+        role: targetUser.role,
+      },
+    });
+  } catch (error) {
+    return errorResponse(500, error?.message || "Internal server error");
+  }
+}

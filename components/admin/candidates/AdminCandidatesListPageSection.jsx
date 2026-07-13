@@ -8,11 +8,16 @@ import {
   createManagedUserFilters,
   MANAGED_USER_PAGE_SIZE,
 } from "@/lib/managedUserFilters";
-import { getCandidates, toggleManagedUserLock } from "@/lib/client/usersClient";
+import {
+  getCandidates,
+  resendManagedUserVerificationEmail,
+  toggleManagedUserLock,
+} from "@/lib/client/usersClient";
 import { toastAlert } from "@/lib/toastAlert";
 
 export default function AdminCandidatesListPageSection() {
   const [lockingId, setLockingId] = useState("");
+  const [resendingId, setResendingId] = useState("");
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState(createManagedUserFilters());
   const { data, isLoading, isRefreshing, refresh } = useRemoteData(
@@ -79,6 +84,24 @@ export default function AdminCandidatesListPageSection() {
     }
   };
 
+  const handleResendVerification = async (managedUser) => {
+    try {
+      setResendingId(managedUser.id);
+      const response = await resendManagedUserVerificationEmail(managedUser.id);
+      toastAlert(
+        "success",
+        response.message || `Verification email sent to ${managedUser.email}.`
+      );
+    } catch (error) {
+      toastAlert(
+        "error",
+        error.response?.data?.message || error.message || "Unable to resend verification email."
+      );
+    } finally {
+      setResendingId("");
+    }
+  };
+
   return (
     <AdminCandidatesListSection
       candidates={data.candidates ?? []}
@@ -87,12 +110,14 @@ export default function AdminCandidatesListPageSection() {
       isLoading={isLoading}
       isRefreshing={isRefreshing}
       lockingId={lockingId}
+      resendingId={resendingId}
       filters={filters}
       onFilterChange={handleFilterChange}
       onClearFilters={handleClearFilters}
       onPageChange={setPage}
       onRefresh={refresh}
       onToggleLock={handleToggleLock}
+      onResendVerification={handleResendVerification}
     />
   );
 }

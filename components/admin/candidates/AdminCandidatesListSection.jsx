@@ -29,12 +29,14 @@ export default function AdminCandidatesListSection({
   isLoading,
   isRefreshing,
   lockingId,
+  resendingId,
   filters,
   onFilterChange,
   onClearFilters,
   onPageChange,
   onRefresh,
   onToggleLock,
+  onResendVerification,
 }) {
   const router = useRouter();
 
@@ -182,6 +184,22 @@ export default function AdminCandidatesListSection({
 
                 <div className="flex shrink-0 flex-col gap-2 xl:min-w-[250px] xl:items-end">
                   <ChevronDown className="hidden size-4 text-muted-foreground xl:block" />
+                  {!candidate.isEmailVerified && onResendVerification ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onResendVerification(candidate);
+                      }}
+                      disabled={resendingId === candidate.id}
+                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-medium text-sky-900 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto"
+                    >
+                      {resendingId === candidate.id ? (
+                        <LoaderCircle className="size-4 animate-spin" />
+                      ) : null}
+                      {resendingId === candidate.id ? "Sending..." : "Resend email"}
+                    </button>
+                  ) : null}
                   <div className="w-full xl:w-auto">
                     <button
                       type="button"

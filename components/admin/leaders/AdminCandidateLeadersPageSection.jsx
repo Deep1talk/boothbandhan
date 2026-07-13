@@ -308,7 +308,7 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
         ctx.fillStyle = "#ffffff";
         ctx.font = "700 42px Arial, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("Field", 0, 0);
+        ctx.fillText("FIELD", 0, 0);
         ctx.restore();
 
         ctx.save();
@@ -317,7 +317,7 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
         ctx.fillStyle = "#ffffff";
         ctx.font = "700 44px Arial, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("Associate", 0, 0);
+        ctx.fillText("ASSOCIATE", 0, 0);
         ctx.restore();
 
         if (logoImage) {
@@ -328,11 +328,11 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
         ctx.textBaseline = "top";
         ctx.font = "700 28px Arial, sans-serif";
         ctx.fillStyle = "#1e5aa7";
-        ctx.fillText("Booth", 170, 42);
+        ctx.fillText("Booth", 186, 42);
         ctx.fillStyle = "#d42d2d";
-        ctx.fillText("Bandhan", 268, 42);
+        ctx.fillText("Bandhan", 284, 42);
         ctx.fillStyle = "#1e5aa7";
-        ctx.fillText("Pvt. Ltd.", 170, 78);
+        ctx.fillText("Pvt. Ltd.", 186, 78);
 
         ctx.lineWidth = 6;
         ctx.strokeStyle = "#50505d";
@@ -376,6 +376,13 @@ export default function AdminCandidateLeadersPageSection({ candidateId }) {
         ctx.textAlign = "right";
         ctx.font = "700 13px Arial, sans-serif";
         ctx.fillText("Authorised Signatory", 490, 904);
+
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "700 10px Arial, sans-serif";
+        ctx.fillText("Note: This card is valid from May", canvas.width - 112, 922, 104);
+        ctx.fillText("2026 to August 2026.", canvas.width - 112, 936, 104);
 
         const addressLines = wrapCanvasText(
           ctx,

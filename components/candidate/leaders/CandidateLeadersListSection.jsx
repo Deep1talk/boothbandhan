@@ -16,6 +16,7 @@ import {
   confirmLeaderRegistrationPayment,
   confirmLeaderCashPayment,
   createLeaderRegistrationPaymentOrder,
+  resendManagedUserVerificationEmail,
 } from "@/lib/client/usersClient";
 import { toastAlert } from "@/lib/toastAlert";
 
@@ -84,6 +85,7 @@ export default function CandidateLeadersListSection({
 }) {
   const [payingLeaderId, setPayingLeaderId] = useState("");
   const [paymentLeader, setPaymentLeader] = useState(null);
+  const [resendingLeaderId, setResendingLeaderId] = useState("");
 
   const handleOnlinePayment = async (leader) => {
     try {
@@ -161,6 +163,26 @@ export default function CandidateLeadersListSection({
       );
     } finally {
       setPayingLeaderId("");
+    }
+  };
+
+  const handleResendVerification = async (leader) => {
+    try {
+      setResendingLeaderId(leader.id);
+      const response = await resendManagedUserVerificationEmail(leader.id);
+      toastAlert(
+        "success",
+        response.message || `Verification email sent to ${leader.email}.`
+      );
+    } catch (error) {
+      toastAlert(
+        "error",
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to resend verification email."
+      );
+    } finally {
+      setResendingLeaderId("");
     }
   };
 
@@ -337,6 +359,19 @@ export default function CandidateLeadersListSection({
                   >
                     {leader.isLocked ? "Locked" : "Active"}
                   </p>
+                  {!leader.isEmailVerified ? (
+                    <button
+                      type="button"
+                      onClick={() => handleResendVerification(leader)}
+                      disabled={resendingLeaderId === leader.id}
+                      className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-medium text-sky-900 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto"
+                    >
+                      {resendingLeaderId === leader.id ? (
+                        <LoaderCircle className="size-4 animate-spin" />
+                      ) : null}
+                      {resendingLeaderId === leader.id ? "Sending..." : "Resend email"}
+                    </button>
+                  ) : null}
                   {leader.registrationPaymentStatus === "paid" ? (
                     <span className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-medium text-emerald-900 xl:w-auto">
                       Paid
