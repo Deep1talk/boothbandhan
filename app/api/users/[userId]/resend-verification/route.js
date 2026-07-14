@@ -1,15 +1,21 @@
 import { connectDB } from "@/lib/connectDB";
+import { sendVerificationEmailToUser } from "@/lib/emailVerification";
 import { errorResponse, successResponse } from "@/lib/helper";
 import { requireRequestUser } from "@/lib/server/requestUser";
-import { sendVerificationEmailToUser } from "@/lib/userCreation";
+import { findAdminManagedUser } from "@/lib/users/queries";
 import UserModel from "@/models/userSchema";
 
 async function findResendTarget(actor, userId) {
   if (actor.role === "Admin") {
+    const targetUser = await findAdminManagedUser(actor.id, userId);
+
+    if (!targetUser) {
+      return null;
+    }
+
     return UserModel.findOne({
-      _id: userId,
-      role: "Candidate",
-      parentId: actor.id,
+      _id: targetUser._id,
+      role: { $in: ["Candidate", "Leader"] },
     }).select("_id name email role isEmailVerified");
   }
 
@@ -33,6 +39,7 @@ export async function POST(req, { params }) {
     }
 
     await connectDB();
+    const verificationBaseUrl = new URL(req.url).origin;
 
     const { user } = auth;
     const { userId } = await params;
@@ -46,7 +53,9 @@ export async function POST(req, { params }) {
       return errorResponse(400, "Email is already verified");
     }
 
-    const mailResult = await sendVerificationEmailToUser(targetUser);
+    const mailResult = await sendVerificationEmailToUser(targetUser, {
+      baseUrl: verificationBaseUrl,
+    });
 
     if (!mailResult.success) {
       return errorResponse(500, "Unable to send verification email");

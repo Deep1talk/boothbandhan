@@ -1,18 +1,25 @@
 import { errorResponse, successResponse } from "@/lib/helper";
 import { getRegistrationPaymentAmount, getRazorpayPublicKey, createRazorpayOrder } from "@/lib/razorpay";
 import { requireRequestUser } from "@/lib/server/requestUser";
-import { findCandidateManagedLeader, setLeaderRegistrationOrder } from "@/lib/users/registrationPayments";
+import {
+  findAdminPayableLeader,
+  findCandidateManagedLeader,
+  setLeaderRegistrationOrder,
+} from "@/lib/users/registrationPayments";
 
 export async function POST(req, { params }) {
   try {
-    const auth = await requireRequestUser(req, ["Candidate"]);
+    const auth = await requireRequestUser(req, ["Admin", "Candidate"]);
 
     if (!auth.ok) {
       return auth.response;
     }
 
     const { userId } = await params;
-    const leader = await findCandidateManagedLeader(auth.user.id, userId);
+    const leader =
+      auth.user.role === "Admin"
+        ? await findAdminPayableLeader(auth.user.id, userId)
+        : await findCandidateManagedLeader(auth.user.id, userId);
 
     if (!leader) {
       return errorResponse(404, "Leader not found");
@@ -23,7 +30,8 @@ export async function POST(req, { params }) {
       receipt: `leader-${leader._id.toString()}-${Date.now()}`,
       notes: {
         leaderId: leader._id.toString(),
-        candidateId: auth.user.id,
+        actorId: auth.user.id,
+        actorRole: auth.user.role,
         type: "leader_registration",
       },
     });

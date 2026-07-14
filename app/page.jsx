@@ -448,7 +448,7 @@ const content = {
 
 const sectionLabels = {
   en: {
-    welcomeTo: "Welcome To",
+    welcomeTo: "Hello Bihar",
     registerNow: "Register Now",
     joinMovement: "Join the Movement",
     knowMore: "Know More",
@@ -469,7 +469,7 @@ const sectionLabels = {
     terms: "Terms & Conditions",
   },
   hi: {
-    welcomeTo: "आपका स्वागत है",
+    welcomeTo: "Hello Bihar",
     registerNow: "अभी रजिस्टर करें",
     joinMovement: "अभियान से जुड़ें",
     knowMore: "और जानें",
@@ -750,36 +750,20 @@ export default function Page() {
                     {String(currentHeroSlide + 1).padStart(2, "0")} / {String(heroSlides.length).padStart(2, "0")}
                   </div>
 
-                  <div className="absolute inset-x-4 bottom-4 rounded-[1.5rem] border border-white/35 bg-[#0b3b31]/82 p-4 text-white backdrop-blur sm:inset-x-6 sm:p-5">
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-2xl bg-orange-400/20 p-3 text-orange-200">
-                        <FileCheck2 className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-orange-200">
-                          {heroSlides[currentHeroSlide]?.title || copy.onGroundExecution}
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-slate-100/90">
-                          {heroSlides[currentHeroSlide]?.description || copy.onGroundText}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center gap-2">
-                      {heroSlides.map((slide, index) => (
-                        <button
-                          key={slide.image}
-                          type="button"
-                          aria-label={`Show slide ${index + 1}`}
-                          onClick={() => setActiveHeroSlide(index)}
-                          className={`h-2.5 rounded-full transition-all ${
-                            currentHeroSlide === index
-                              ? "w-10 bg-orange-300"
-                              : "w-2.5 bg-white/55 hover:bg-white/75"
-                          }`}
-                        />
-                      ))}
-                    </div>
+                  <div className="absolute inset-x-4 bottom-4 flex items-center gap-2 sm:inset-x-6">
+                    {heroSlides.map((slide, index) => (
+                      <button
+                        key={slide.image}
+                        type="button"
+                        aria-label={`Show slide ${index + 1}`}
+                        onClick={() => setActiveHeroSlide(index)}
+                        className={`h-2.5 rounded-full transition-all ${
+                          currentHeroSlide === index
+                            ? "w-10 bg-orange-300"
+                            : "w-2.5 bg-white/55 hover:bg-white/75"
+                        }`}
+                      />
+                    ))}
                   </div>
                 </div>
               </div>

@@ -172,7 +172,7 @@ export default function FieldAssociateIdCardPanel({ user }) {
         ctx.fillStyle = "#1e5aa7";
         ctx.fillText("Booth", 186, 42);
         ctx.fillStyle = "#d42d2d";
-        ctx.fillText("Bandhan", 284, 42);
+        ctx.fillText("Bandhan", 270, 42);
         ctx.fillStyle = "#1e5aa7";
         ctx.fillText("Pvt. Ltd.", 186, 78);
 
@@ -223,8 +223,8 @@ export default function FieldAssociateIdCardPanel({ user }) {
         ctx.textBaseline = "top";
         ctx.fillStyle = "#ffffff";
         ctx.font = "700 10px Arial, sans-serif";
-        ctx.fillText("Note: This card is valid from May", canvas.width - 112, 922, 104);
-        ctx.fillText("2026 to August 2026.", canvas.width - 112, 936, 104);
+        ctx.fillText("Note: This card is valid from July", canvas.width - 112, 922, 104);
+        ctx.fillText("2026 to March 2027.", canvas.width - 112, 936, 104);
 
         const addressLines = wrapCanvasText(
           ctx,

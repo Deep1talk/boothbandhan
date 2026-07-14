@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { useForm, useWatch } from "react-hook-form";
@@ -18,6 +18,7 @@ const DEFAULT_FAMILY_MEMBERS = Array.from({ length: 6 }, () => ({
   mobileNumber: "",
   educationOrOccupation: "",
 }));
+const INITIAL_FAMILY_MEMBER_ROWS = 1;
 
 const DEFAULT_VALUES = {
   constituency: "",
@@ -40,7 +41,20 @@ const DEFAULT_VALUES = {
   issueDetails: "",
   verifierComment: "",
   wantsToJoinOrganization: "",
+  declarationAccepted: false,
 };
+
+function buildDefaultValues(leader) {
+  return {
+    ...DEFAULT_VALUES,
+    constituency: leader?.vidhansabha || "",
+    block: leader?.block || "",
+    panchayat: leader?.panchayat || "",
+    wardNumber: leader?.ward || "",
+    wardInchargeName: leader?.name || "",
+    wardInchargePhone: leader?.phone || "",
+  };
+}
 
 function formatDate(value) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -77,12 +91,14 @@ function normalizePayload(values) {
   };
 }
 
-export default function LeaderHelpDeskSection({ initialProblems = [] }) {
+export default function LeaderHelpDeskSection({ initialProblems = [], leader = null }) {
   const { language } = useLanguage();
   const t = (en, hi) => (language === "hi" ? hi : en);
   const [problems, setProblems] = useState(initialProblems);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [visibleFamilyRows, setVisibleFamilyRows] = useState(INITIAL_FAMILY_MEMBER_ROWS);
+  const defaultValues = useMemo(() => buildDefaultValues(leader), [leader]);
   const {
     control,
     register,
@@ -91,8 +107,12 @@ export default function LeaderHelpDeskSection({ initialProblems = [] }) {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(helpDeskProblemSchema),
-    defaultValues: DEFAULT_VALUES,
+    defaultValues,
   });
+
+  useEffect(() => {
+    reset(defaultValues);
+  }, [defaultValues, reset]);
 
   const selectedIssueCategories =
     useWatch({ control, name: "issueCategories" }) || [];
@@ -129,7 +149,8 @@ export default function LeaderHelpDeskSection({ initialProblems = [] }) {
       );
 
       setProblems((current) => [data.data.problem, ...current]);
-      reset(DEFAULT_VALUES);
+      reset(defaultValues);
+      setVisibleFamilyRows(INITIAL_FAMILY_MEMBER_ROWS);
       toastAlert("success", data.message || "Problem submitted successfully.");
     } catch (error) {
       toastAlert(
@@ -266,7 +287,7 @@ export default function LeaderHelpDeskSection({ initialProblems = [] }) {
               </h3>
             </div>
             <div className="mt-4 space-y-3 md:hidden">
-              {DEFAULT_FAMILY_MEMBERS.map((_, index) => (
+              {DEFAULT_FAMILY_MEMBERS.slice(0, visibleFamilyRows).map((_, index) => (
                 <div
                   key={index}
                   className="rounded-2xl border border-border/60 bg-background/70 p-4"
@@ -331,7 +352,7 @@ export default function LeaderHelpDeskSection({ initialProblems = [] }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60 bg-white">
-                  {DEFAULT_FAMILY_MEMBERS.map((_, index) => (
+                  {DEFAULT_FAMILY_MEMBERS.slice(0, visibleFamilyRows).map((_, index) => (
                     <tr key={index}>
                       <td className="px-3 py-3 font-medium text-muted-foreground">
                         {index + 1}
@@ -378,6 +399,32 @@ export default function LeaderHelpDeskSection({ initialProblems = [] }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setVisibleFamilyRows((current) =>
+                    Math.min(DEFAULT_FAMILY_MEMBERS.length, current + 1)
+                  )
+                }
+                disabled={visibleFamilyRows >= DEFAULT_FAMILY_MEMBERS.length}
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {t("Add more row", "एक और पंक्ति जोड़ें")}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setVisibleFamilyRows((current) =>
+                    Math.max(INITIAL_FAMILY_MEMBER_ROWS, current - 1)
+                  )
+                }
+                disabled={visibleFamilyRows <= INITIAL_FAMILY_MEMBER_ROWS}
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-border/60 bg-background px-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {t("Remove row", "पंक्ति हटाएं")}
+              </button>
             </div>
             {errors.familyMembers?.message ? (
               <p className="mt-2 text-sm text-rose-600">
@@ -440,13 +487,6 @@ export default function LeaderHelpDeskSection({ initialProblems = [] }) {
                   className={`${inputClassName} resize-y`}
                 />
               </Field>
-              <Field label={t("Ward Incharge / Verifier Comment", "वार्ड प्रभारी / सत्यापक टिप्पणी")} error={errors.verifierComment?.message}>
-                <textarea
-                  rows={4}
-                  {...register("verifierComment")}
-                  className={`${inputClassName} resize-y`}
-                />
-              </Field>
               <Field label={t("Is this family interested in joining the organization?", "क्या यह परिवार संगठन से जुड़ना चाहता है?")}>
                 <div className="flex flex-wrap gap-3">
                   {[
@@ -470,6 +510,32 @@ export default function LeaderHelpDeskSection({ initialProblems = [] }) {
               </Field>
             </div>
           </section>
+
+          <div className="space-y-3 rounded-2xl border border-border/70 bg-background/70 p-4">
+            <div className="rounded-2xl border-l-4 border-emerald-600 bg-emerald-50 px-4 py-3 text-sm leading-7 text-emerald-950">
+              <p>
+                <span className="font-semibold">घोषणा:</span> मैं यह प्रमाणित करता हूँ कि ऊपर दी गई सभी जानकारी
+                पूरी तरह सही है और मैं स्वेच्छा से, पूर्ण सहमति के साथ अपनी यह सभी आवश्यक जानकारी Booth
+                Bandhan Private Limited के साथ साझा कर रहा हूँ।
+              </p>
+            </div>
+            <label className="flex items-start gap-3 text-sm text-foreground">
+              <input
+                type="checkbox"
+                {...register("declarationAccepted")}
+                className="mt-1 size-4 rounded border-border text-emerald-600 focus:ring-emerald-500"
+              />
+              <span>
+                मैंने ऊपर दी गई घोषणा पढ़ ली है और मैं इससे सहमत हूँ।
+                <span className="ml-1 text-rose-600">*</span>
+              </span>
+            </label>
+            {errors.declarationAccepted ? (
+              <p className="text-sm text-rose-600">
+                {errors.declarationAccepted.message}
+              </p>
+            ) : null}
+          </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">

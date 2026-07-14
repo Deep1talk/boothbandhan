@@ -21,8 +21,11 @@ import {
 import { toastAlert } from "@/lib/toastAlert";
 
 const LEADER_STATUS_OPTIONS = [
+  { value: "Active", label: "Active" },
+  { value: "Verified", label: "Verified" },
   { value: "Locked", label: "Locked" },
   { value: "Paid", label: "Paid" },
+  { value: "Unpaid", label: "Unpaid" },
   { value: "Pending", label: "Pending" },
 ];
 

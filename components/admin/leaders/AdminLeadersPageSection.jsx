@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import {
+  CircleDollarSign,
   LoaderCircle,
   Lock,
   RefreshCw,
   ShieldCheck,
+  Trash2,
   Unlock,
   UserRoundSearch,
   UsersRound,
@@ -14,17 +16,29 @@ import AdminLeaderProblemsPanel from "@/components/admin/leaders/AdminLeaderProb
 import ManagedUserFilters from "@/components/shared/filters/ManagedUserFilters";
 import PaginationControls from "@/components/shared/filters/PaginationControls";
 import { useRemoteData } from "@/hooks/useRemoteData";
-import { getLeaders, toggleManagedUserLock } from "@/lib/client/usersClient";
+import {
+  confirmLeaderCashPayment,
+  confirmLeaderRegistrationPayment,
+  createLeaderRegistrationPaymentOrder,
+  deleteManagedUser,
+  getLeaders,
+  resendManagedUserVerificationEmail,
+  toggleManagedUserLock,
+} from "@/lib/client/usersClient";
 import {
   buildManagedUserFilterQueryParams,
   createManagedUserFilters,
   MANAGED_USER_PAGE_SIZE,
 } from "@/lib/managedUserFilters";
+import { showConfirmAlert } from "@/lib/sweetAlert";
 import { toastAlert } from "@/lib/toastAlert";
 
 const ADMIN_LEADER_STATUS_OPTIONS = [
+  { value: "Active", label: "Active" },
+  { value: "Verified", label: "Verified" },
   { value: "Locked", label: "Locked" },
   { value: "Paid", label: "Paid" },
+  { value: "Unpaid", label: "Unpaid" },
   { value: "Pending", label: "Pending" },
 ];
 
@@ -62,8 +76,31 @@ function getManagedByLabel(leader) {
   return leader.parentName || "Field associate";
 }
 
+function loadRazorpayCheckout() {
+  if (typeof window === "undefined") {
+    return Promise.resolve(false);
+  }
+
+  if (window.Razorpay) {
+    return Promise.resolve(true);
+  }
+
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 export default function AdminLeadersPageSection() {
+  const [deletingId, setDeletingId] = useState("");
   const [lockingId, setLockingId] = useState("");
+  const [payingLeaderId, setPayingLeaderId] = useState("");
+  const [paymentLeader, setPaymentLeader] = useState(null);
+  const [resendingLeaderId, setResendingLeaderId] = useState("");
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState(createManagedUserFilters());
   const { data, isLoading, isRefreshing, refresh } = useRemoteData(
@@ -119,6 +156,133 @@ export default function AdminLeadersPageSection() {
       toastAlert("error", error.response?.data?.message || error.message || "Unable to update leader status.");
     } finally {
       setLockingId("");
+    }
+  };
+
+  const handleDeleteLeader = async (leader) => {
+    const result = await showConfirmAlert(
+      "Delete leader?",
+      `${leader.name} will be permanently deleted.`,
+      {
+        icon: "warning",
+        confirmButtonText: "Yes, delete",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#b91c1c",
+      }
+    );
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(leader.id);
+      const response = await deleteManagedUser(leader.id);
+      toastAlert("success", response.message || "Leader deleted successfully.");
+      await refresh();
+    } catch (error) {
+      toastAlert("error", error.response?.data?.message || error.message || "Unable to delete leader.");
+    } finally {
+      setDeletingId("");
+    }
+  };
+
+  const handleOnlinePayment = async (leader) => {
+    try {
+      setPayingLeaderId(leader.id);
+      setPaymentLeader(null);
+      const isLoaded = await loadRazorpayCheckout();
+
+      if (!isLoaded) {
+        throw new Error("Unable to load Razorpay checkout.");
+      }
+
+      const orderData = await createLeaderRegistrationPaymentOrder(leader.id);
+      const razorpay = new window.Razorpay({
+        key: orderData.key,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: "Booth Bandhan",
+        description: "Leader registration fee",
+        order_id: orderData.order.id,
+        prefill: {
+          name: orderData.leader.name,
+          email: orderData.leader.email,
+          contact: orderData.leader.phone,
+        },
+        theme: {
+          color: "#0f766e",
+        },
+        handler: async (paymentResult) => {
+          try {
+            await confirmLeaderRegistrationPayment(leader.id, paymentResult);
+            toastAlert("success", "Leader payment completed successfully.");
+            await refresh();
+          } catch (error) {
+            toastAlert(
+              "error",
+              error.response?.data?.message || error.message || "Payment verification failed."
+            );
+          } finally {
+            setPayingLeaderId("");
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setPayingLeaderId("");
+          },
+        },
+      });
+
+      razorpay.open();
+    } catch (error) {
+      setPayingLeaderId("");
+      toastAlert(
+        "error",
+        error.response?.data?.message || error.message || "Unable to start payment."
+      );
+    }
+  };
+
+  const handleCashPayment = async (leader) => {
+    try {
+      setPayingLeaderId(leader.id);
+      const response = await confirmLeaderCashPayment(leader.id);
+      toastAlert(
+        "success",
+        response.message || "Cash payment recorded successfully."
+      );
+      setPaymentLeader(null);
+      await refresh();
+    } catch (error) {
+      toastAlert(
+        "error",
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to record cash payment."
+      );
+    } finally {
+      setPayingLeaderId("");
+    }
+  };
+
+  const handleResendVerification = async (leader) => {
+    try {
+      setResendingLeaderId(leader.id);
+      const response = await resendManagedUserVerificationEmail(leader.id);
+      toastAlert(
+        "success",
+        response.message || `Verification email sent to ${leader.email}.`
+      );
+    } catch (error) {
+      toastAlert(
+        "error",
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to resend verification email."
+      );
+    } finally {
+      setResendingLeaderId("");
     }
   };
 
@@ -193,6 +357,7 @@ export default function AdminLeadersPageSection() {
           title="Leader filters"
           filters={filters}
           showBloodGroup={false}
+          showLeaderManagementFilters
           statusOptions={ADMIN_LEADER_STATUS_OPTIONS}
           onChange={handleFilterChange}
           onClear={() => {
@@ -324,6 +489,51 @@ export default function AdminLeadersPageSection() {
                       )}
                       {leader.isLocked ? "Unlock" : "Lock"}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteLeader(leader)}
+                      disabled={deletingId === leader.id}
+                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-sm font-medium text-rose-900 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto"
+                    >
+                      {deletingId === leader.id ? (
+                        <LoaderCircle className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
+                      {deletingId === leader.id ? "Deleting..." : "Delete"}
+                    </button>
+                    {!leader.isEmailVerified ? (
+                      <button
+                        type="button"
+                        onClick={() => handleResendVerification(leader)}
+                        disabled={resendingLeaderId === leader.id}
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-medium text-sky-900 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto"
+                      >
+                        {resendingLeaderId === leader.id ? (
+                          <LoaderCircle className="size-4 animate-spin" />
+                        ) : null}
+                        {resendingLeaderId === leader.id ? "Sending..." : "Resend email"}
+                      </button>
+                    ) : null}
+                    {leader.registrationPaymentStatus === "paid" ? (
+                      <span className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-medium text-emerald-900 xl:w-auto">
+                        Paid
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setPaymentLeader(leader)}
+                        disabled={payingLeaderId === leader.id}
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto"
+                      >
+                        {payingLeaderId === leader.id ? (
+                          <LoaderCircle className="size-4 animate-spin" />
+                        ) : (
+                          <CircleDollarSign className="size-4" />
+                        )}
+                        Pay Now
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -339,6 +549,62 @@ export default function AdminLeadersPageSection() {
 
         <PaginationControls pagination={data.pagination} onPageChange={setPage} />
       </section>
+
+      {paymentLeader ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
+          <div className="w-full max-w-md rounded-[1.5rem] border border-border/60 bg-white p-6 shadow-[0_20px_80px_rgba(15,23,42,0.2)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Complete payment
+            </p>
+            <h3 className="mt-2 text-xl font-semibold text-foreground">
+              Choose payment method
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Select how you want to complete payment for{" "}
+              <span className="font-semibold text-foreground">
+                {paymentLeader.name}
+              </span>
+              .
+            </p>
+
+            <div className="mt-5 grid gap-3">
+              <button
+                type="button"
+                onClick={() => handleOnlinePayment(paymentLeader)}
+                disabled={payingLeaderId === paymentLeader.id}
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {payingLeaderId === paymentLeader.id
+                  ? "Starting payment..."
+                  : "Online Payment"}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCashPayment(paymentLeader)}
+                disabled={payingLeaderId === paymentLeader.id}
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-border/60 bg-white px-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {payingLeaderId === paymentLeader.id
+                  ? "Processing..."
+                  : "Cash Payment"}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!payingLeaderId) {
+                  setPaymentLeader(null);
+                }
+              }}
+              disabled={Boolean(payingLeaderId)}
+              className="mt-4 inline-flex w-full items-center justify-center rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -133,6 +133,7 @@ function TextField({
   placeholder,
   className = "",
   required = false,
+  autoComplete,
 }) {
   return (
     <div className={`space-y-2 ${className}`}>
@@ -146,6 +147,7 @@ function TextField({
         placeholder={placeholder}
         {...register(name)}
         required={required}
+        autoComplete={autoComplete}
         className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
       />
       <FieldError message={error?.message} />
@@ -276,6 +278,12 @@ export default function CreateManagedUserForm({
           topIssue1: "",
           topIssue2: "",
           topIssue3: "",
+          socialWorkerAshaName: "",
+          socialWorkerAshaPhone: "",
+          socialWorkerJeevikaDidiName: "",
+          socialWorkerJeevikaDidiPhone: "",
+          socialWorkerAaganBadiSevikaName: "",
+          socialWorkerAaganBadiSevikaPhone: "",
           declarationAccepted: false,
           registrationDate: "",
           registrationPlace: "",
@@ -488,7 +496,12 @@ export default function CreateManagedUserForm({
         <p className="max-w-2xl text-sm leading-7 text-muted-foreground">{t(description)}</p>
       </div>
 
-      <form className="mt-6 grid gap-4 md:mt-8 md:grid-cols-2 md:gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form
+        className="mt-6 grid gap-4 md:mt-8 md:grid-cols-2 md:gap-5"
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        autoComplete="off"
+      >
         {isLeaderForm ? (
           <>
             <SectionHeading title={t("1. Personal and Contact Details")} />
@@ -499,6 +512,7 @@ export default function CreateManagedUserForm({
               placeholder={t("Enter full name")}
               register={register}
               error={errors.name}
+              autoComplete="name"
               required
             />
             <TextField
@@ -558,6 +572,7 @@ export default function CreateManagedUserForm({
               placeholder={t("Enter 10 digit mobile number")}
               register={register}
               error={errors.phone}
+              autoComplete="tel"
               required
             />
             <TextField
@@ -568,6 +583,7 @@ export default function CreateManagedUserForm({
               placeholder={t("Enter 10 digit WhatsApp number")}
               register={register}
               error={errors.whatsappNumber}
+              autoComplete="tel-national"
               required
             />
             <TextField
@@ -579,6 +595,7 @@ export default function CreateManagedUserForm({
               register={register}
               error={errors.email}
               className="md:col-span-2"
+              autoComplete="email"
               required
             />
 
@@ -591,6 +608,7 @@ export default function CreateManagedUserForm({
               register={register}
               error={errors.fullAddress}
               className="md:col-span-2"
+              autoComplete="street-address"
               required
             />
             <TextField
@@ -666,7 +684,6 @@ export default function CreateManagedUserForm({
               options={YES_NO_OPTIONS}
               register={register}
               error={errors.hasContestedElection}
-              required
             />
             <TextField
               id={`${submitLabel}-experienceYears`}
@@ -676,7 +693,6 @@ export default function CreateManagedUserForm({
               placeholder={t("Enter years")}
               register={register}
               error={errors.experienceYears}
-              required
             />
             <TextField
               id={`${submitLabel}-mainSupportBase`}
@@ -685,7 +701,6 @@ export default function CreateManagedUserForm({
               placeholder={t("Kisan / youth / women etc.")}
               register={register}
               error={errors.mainSupportBase}
-              required
             />
             <TextField
               id={`${submitLabel}-activeWorkerCount`}
@@ -695,7 +710,6 @@ export default function CreateManagedUserForm({
               placeholder={t("Enter worker count")}
               register={register}
               error={errors.activeWorkerCount}
-              required
             />
 
             <SectionHeading title={t("4. Ward Planning and Resources")} />
@@ -767,6 +781,90 @@ export default function CreateManagedUserForm({
               className="md:col-span-2"
             />
 
+            <SectionHeading title={t("5. Social Worker")} />
+            <div className="space-y-4 rounded-2xl border border-border/70 bg-background/70 p-4 md:col-span-2">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{t("Asha")}</p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <TextField
+                    id={`${submitLabel}-socialWorkerAshaName`}
+                    label={t("Name")}
+                    name="socialWorkerAshaName"
+                    placeholder={t("Enter full name")}
+                    register={register}
+                    error={errors.socialWorkerAshaName}
+                    required
+                  />
+                  <TextField
+                    id={`${submitLabel}-socialWorkerAshaPhone`}
+                    label={t("Phone Number")}
+                    name="socialWorkerAshaPhone"
+                    type="tel"
+                    placeholder={t("Enter phone number")}
+                    register={register}
+                    error={errors.socialWorkerAshaPhone}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t border-border/70 pt-4">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{t("Jeevika didi")}</p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <TextField
+                    id={`${submitLabel}-socialWorkerJeevikaDidiName`}
+                    label={t("Name")}
+                    name="socialWorkerJeevikaDidiName"
+                    placeholder={t("Enter full name")}
+                    register={register}
+                    error={errors.socialWorkerJeevikaDidiName}
+                    required
+                  />
+                  <TextField
+                    id={`${submitLabel}-socialWorkerJeevikaDidiPhone`}
+                    label={t("Phone Number")}
+                    name="socialWorkerJeevikaDidiPhone"
+                    type="tel"
+                    placeholder={t("Enter phone number")}
+                    register={register}
+                    error={errors.socialWorkerJeevikaDidiPhone}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t border-border/70 pt-4">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{t("Aagan Badi sevika")}</p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <TextField
+                    id={`${submitLabel}-socialWorkerAaganBadiSevikaName`}
+                    label={t("Name")}
+                    name="socialWorkerAaganBadiSevikaName"
+                    placeholder={t("Enter full name")}
+                    register={register}
+                    error={errors.socialWorkerAaganBadiSevikaName}
+                    required
+                  />
+                  <TextField
+                    id={`${submitLabel}-socialWorkerAaganBadiSevikaPhone`}
+                    label={t("Phone Number")}
+                    name="socialWorkerAaganBadiSevikaPhone"
+                    type="tel"
+                    placeholder={t("Enter phone number")}
+                    register={register}
+                    error={errors.socialWorkerAaganBadiSevikaPhone}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-3 rounded-2xl border border-border/70 bg-background/70 p-4 md:col-span-2">
               <label className="flex items-start gap-3 text-sm text-foreground">
                 <input
@@ -808,6 +906,7 @@ export default function CreateManagedUserForm({
               placeholder={t("Enter place")}
               register={register}
               error={errors.registrationPlace}
+              autoComplete="address-level2"
             />
             <TextField
               id={`${submitLabel}-signatureName`}
@@ -816,6 +915,7 @@ export default function CreateManagedUserForm({
               placeholder={t("Enter signatory name")}
               register={register}
               error={errors.signatureName}
+              autoComplete="name"
             />
           </>
         ) : (
@@ -827,6 +927,7 @@ export default function CreateManagedUserForm({
               placeholder={t("Enter full name")}
               register={register}
               error={errors.name}
+              autoComplete="name"
               required
             />
             <TextField
@@ -837,6 +938,7 @@ export default function CreateManagedUserForm({
               placeholder="you@example.com"
               register={register}
               error={errors.email}
+              autoComplete="email"
               required
             />
             <TextField
@@ -847,6 +949,7 @@ export default function CreateManagedUserForm({
               placeholder={t("Enter phone number")}
               register={register}
               error={errors.phone}
+              autoComplete="tel"
               required
             />
             <TextField
@@ -905,6 +1008,7 @@ export default function CreateManagedUserForm({
               register={register}
               error={errors.fullAddress}
               className="md:col-span-2"
+              autoComplete="street-address"
               required
             />
             <div className="space-y-2 md:col-span-2">
@@ -963,6 +1067,7 @@ export default function CreateManagedUserForm({
               placeholder={t("Enter password")}
               {...register("password")}
               required
+              autoComplete="new-password"
               className="flex h-11 w-full rounded-lg border border-border bg-background px-3 pr-11 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
             />
             <button
@@ -988,6 +1093,7 @@ export default function CreateManagedUserForm({
             placeholder={t("Confirm password")}
             {...register("confirmPassword")}
             required
+            autoComplete="new-password"
             className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
           />
           <FieldError message={errors.confirmPassword?.message} />

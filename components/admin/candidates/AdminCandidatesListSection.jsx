@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, LoaderCircle, Lock, RefreshCw, ShieldCheck, Unlock, UsersRound } from "lucide-react";
+import { ChevronDown, LoaderCircle, Lock, RefreshCw, ShieldCheck, Trash2, Unlock, UsersRound } from "lucide-react";
 import ManagedUserFilters from "@/components/shared/filters/ManagedUserFilters";
 import PaginationControls from "@/components/shared/filters/PaginationControls";
 import { getAdminCandidateLeadersRoute, getAdminCandidateOverviewRoute } from "@/routes/adminpanelRoutes";
@@ -28,6 +28,7 @@ export default function AdminCandidatesListSection({
   exportHref,
   isLoading,
   isRefreshing,
+  deletingId,
   lockingId,
   resendingId,
   filters,
@@ -37,6 +38,7 @@ export default function AdminCandidatesListSection({
   onRefresh,
   onToggleLock,
   onResendVerification,
+  onDeleteUser,
 }) {
   const router = useRouter();
 
@@ -220,6 +222,24 @@ export default function AdminCandidatesListSection({
                       {candidate.isLocked ? "Unlock" : "Lock"}
                     </button>
                   </div>
+                  {onDeleteUser ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onDeleteUser({ ...candidate, role: "Candidate" });
+                      }}
+                      disabled={deletingId === candidate.id}
+                      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-sm font-medium text-rose-900 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto"
+                    >
+                      {deletingId === candidate.id ? (
+                        <LoaderCircle className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
+                      {deletingId === candidate.id ? "Deleting..." : "Delete"}
+                    </button>
+                  ) : null}
                   <Link
                     href={getAdminCandidateLeadersRoute(candidate.id)}
                     onClick={(event) => event.stopPropagation()}

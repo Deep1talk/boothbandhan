@@ -3,6 +3,7 @@ import { errorResponse, successResponse } from "@/lib/helper";
 import { sendMail } from "@/lib/sendMail";
 import { requireRequestUser } from "@/lib/server/requestUser";
 import {
+  findAdminPayableLeader,
   findCandidateManagedLeader,
   markLeaderRegistrationCashPaid,
 } from "@/lib/users/registrationPayments";
@@ -10,14 +11,17 @@ import { toManagedUserPayload } from "@/lib/users/presenters";
 
 export async function POST(req, { params }) {
   try {
-    const auth = await requireRequestUser(req, ["Candidate"]);
+    const auth = await requireRequestUser(req, ["Admin", "Candidate"]);
 
     if (!auth.ok) {
       return auth.response;
     }
 
     const { userId } = await params;
-    const leader = await findCandidateManagedLeader(auth.user.id, userId);
+    const leader =
+      auth.user.role === "Admin"
+        ? await findAdminPayableLeader(auth.user.id, userId)
+        : await findCandidateManagedLeader(auth.user.id, userId);
 
     if (!leader) {
       return errorResponse(404, "Leader not found");

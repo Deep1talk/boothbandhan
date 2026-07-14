@@ -9,13 +9,16 @@ import {
   MANAGED_USER_PAGE_SIZE,
 } from "@/lib/managedUserFilters";
 import {
+  deleteManagedUser,
   getCandidates,
   resendManagedUserVerificationEmail,
   toggleManagedUserLock,
 } from "@/lib/client/usersClient";
+import { showConfirmAlert } from "@/lib/sweetAlert";
 import { toastAlert } from "@/lib/toastAlert";
 
 export default function AdminCandidatesListPageSection() {
+  const [deletingId, setDeletingId] = useState("");
   const [lockingId, setLockingId] = useState("");
   const [resendingId, setResendingId] = useState("");
   const [page, setPage] = useState(1);
@@ -102,6 +105,47 @@ export default function AdminCandidatesListPageSection() {
     }
   };
 
+  const handleDeleteUser = async (managedUser) => {
+    const linkedLeaderCount = managedUser.leadersCount ?? 0;
+    const targetLabel = managedUser.role === "Candidate" ? "field associate" : "leader";
+    const linkedLeaderMessage =
+      managedUser.role === "Candidate" && linkedLeaderCount
+        ? ` ${linkedLeaderCount} linked leader${linkedLeaderCount === 1 ? "" : "s"} will remain and become direct leader${linkedLeaderCount === 1 ? "" : "s"}.`
+        : "";
+
+    const result = await showConfirmAlert(
+      `Delete ${targetLabel}?`,
+      `${managedUser.name} will be permanently deleted.${linkedLeaderMessage}`,
+      {
+        icon: "warning",
+        confirmButtonText: "Yes, delete",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#b91c1c",
+      }
+    );
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(managedUser.id);
+      const response = await deleteManagedUser(managedUser.id);
+      toastAlert(
+        "success",
+        response.message || `${managedUser.name} deleted successfully.`
+      );
+      await refresh();
+    } catch (error) {
+      toastAlert(
+        "error",
+        error.response?.data?.message || error.message || "Unable to delete user."
+      );
+    } finally {
+      setDeletingId("");
+    }
+  };
+
   return (
     <AdminCandidatesListSection
       candidates={data.candidates ?? []}
@@ -109,6 +153,7 @@ export default function AdminCandidatesListPageSection() {
       exportHref={`/api/users/candidates/export?${buildManagedUserFilterQueryParams(filters).toString()}`}
       isLoading={isLoading}
       isRefreshing={isRefreshing}
+      deletingId={deletingId}
       lockingId={lockingId}
       resendingId={resendingId}
       filters={filters}
@@ -118,6 +163,7 @@ export default function AdminCandidatesListPageSection() {
       onRefresh={refresh}
       onToggleLock={handleToggleLock}
       onResendVerification={handleResendVerification}
+      onDeleteUser={handleDeleteUser}
     />
   );
 }

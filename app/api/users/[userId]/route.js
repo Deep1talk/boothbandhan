@@ -1,8 +1,11 @@
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/connectDB";
 import { destroyCloudinaryImage, uploadImageToCloudinary } from "@/lib/cloudinary";
 import { catchError, errorResponse, successResponse } from "@/lib/helper";
 import { zodAdminUpdateManagedUserSchema } from "@/lib/zodSchema";
 import { requireRequestUser } from "@/lib/server/requestUser";
+import HelpDeskProblemModel from "@/models/helpDeskProblemSchema";
+import NotificationReadModel from "@/models/notificationReadSchema";
 import UserModel from "@/models/userSchema";
 
 export const dynamic = "force-dynamic";
@@ -134,25 +137,93 @@ export async function DELETE(req, { params }) {
 
     await connectDB();
 
-    const managedUser = await UserModel.findOne({
-      _id: userId,
-      role: "Candidate",
-      parentId: auth.user.id,
-    });
+    if (!mongoose.isValidObjectId(userId)) {
+      return errorResponse(404, "User not found");
+    }
+
+    const managedUser = await UserModel.findById(userId)
+      .select("_id name role parentId avatarPublicId posterPhotoPublicId")
+      .lean();
 
     if (!managedUser) {
-      return errorResponse(404, "Field associate not found");
+      return errorResponse(404, "User not found");
     }
 
-    if (managedUser.avatarPublicId) {
-      await destroyCloudinaryImage(managedUser.avatarPublicId);
+    if (managedUser.role === "Candidate") {
+      if (managedUser.parentId?.toString() !== auth.user.id) {
+        return errorResponse(404, "Field associate not found");
+      }
+    } else if (managedUser.role === "Leader") {
+      if (managedUser.parentId) {
+        const parentCandidate = await UserModel.findOne({
+          _id: managedUser.parentId,
+          role: "Candidate",
+          parentId: auth.user.id,
+        })
+          .select("_id")
+          .lean();
+
+        if (!parentCandidate) {
+          return errorResponse(404, "Leader not found");
+        }
+      }
+    } else {
+      return errorResponse(403, "This user cannot be deleted.");
     }
 
-    managedUser.avatar = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
-    managedUser.avatarPublicId = null;
-    await managedUser.save();
+    const linkedLeaders =
+      managedUser.role === "Candidate"
+        ? await UserModel.find({
+            role: "Leader",
+            parentId: managedUser._id,
+          })
+            .select("_id")
+            .lean()
+        : [];
 
-    return successResponse(200, "Profile picture removed successfully");
+    const usersToDelete = [managedUser];
+    const userIds = usersToDelete.map((user) => user._id);
+    const leaderIds =
+      managedUser.role === "Leader" ? [managedUser._id] : [];
+    const cloudinaryPublicIds = Array.from(
+      new Set(
+        usersToDelete.flatMap((user) =>
+          [user.avatarPublicId, user.posterPhotoPublicId].filter(Boolean)
+        )
+      )
+    );
+
+    for (const publicId of cloudinaryPublicIds) {
+      await destroyCloudinaryImage(publicId);
+    }
+
+    await Promise.all([
+      UserModel.deleteMany({ _id: { $in: userIds } }),
+      NotificationReadModel.deleteMany({ userId: { $in: userIds } }),
+      linkedLeaders.length
+        ? UserModel.updateMany(
+            { _id: { $in: linkedLeaders.map((leader) => leader._id) } },
+            { $set: { parentId: null } }
+          )
+        : Promise.resolve(),
+      leaderIds.length
+        ? HelpDeskProblemModel.deleteMany({ leaderId: { $in: leaderIds } })
+        : Promise.resolve(),
+    ]);
+
+    const linkedLeaderCount = linkedLeaders.length;
+    const message =
+      managedUser.role === "Candidate"
+        ? linkedLeaderCount
+          ? `Field associate deleted successfully. ${linkedLeaderCount} linked leader${linkedLeaderCount === 1 ? " is" : "s are"} now direct leader${linkedLeaderCount === 1 ? "" : "s"}.`
+          : "Field associate deleted successfully."
+        : "Leader deleted successfully.";
+
+    return successResponse(200, message, {
+      deletedUsers: userIds.length,
+      deletedLeaders: leaderIds.length,
+      detachedLeaders: linkedLeaderCount,
+    });
   } catch (error) {
     return catchError(error);
   }

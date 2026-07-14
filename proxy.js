@@ -4,6 +4,7 @@ import { AUTH_COOKIE_NAME, verifyAuthToken } from "@/lib/authToken";
 import { WEBSITE_LOGIN } from "@/routes/websiteRoutes";
 
 const AUTH_ROUTE_PREFIX = "/auth";
+const EMAIL_VERIFICATION_ROUTE_PREFIX = "/auth/verify-email";
 
 export async function proxy(request) {
   const { pathname, search } = request.nextUrl;
@@ -21,7 +22,11 @@ export async function proxy(request) {
     return NextResponse.redirect(new URL(getDefaultRouteForRole(session?.role), request.url));
   }
 
-  if (pathname.startsWith(AUTH_ROUTE_PREFIX) && session?.userId) {
+  if (
+    pathname.startsWith(AUTH_ROUTE_PREFIX) &&
+    !pathname.startsWith(EMAIL_VERIFICATION_ROUTE_PREFIX) &&
+    session?.userId
+  ) {
     return NextResponse.redirect(new URL(getDefaultRouteForRole(session?.role), request.url));
   }
 

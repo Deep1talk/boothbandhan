@@ -8,6 +8,7 @@ import { createUserWithVerification, getChildRoleForParent } from "@/lib/userCre
 export async function POST(req) {
   try {
     await connectDB();
+    const verificationBaseUrl = new URL(req.url).origin;
     const { session, user } = await getRequestUser(req);
 
     if (!session?.userId || !user) {
@@ -70,6 +71,7 @@ export async function POST(req) {
         phone,
         role: childRole,
         parentId: user.id,
+        verificationBaseUrl,
         profileData: childRole === "Leader" ? {
           ...sharedProfileData,
           fatherName: validateData.data.fatherName,
@@ -99,6 +101,12 @@ export async function POST(req) {
             validateData.data.topIssue2,
             validateData.data.topIssue3,
           ],
+          socialWorkerAshaName: validateData.data.socialWorkerAshaName,
+          socialWorkerAshaPhone: validateData.data.socialWorkerAshaPhone,
+          socialWorkerJeevikaDidiName: validateData.data.socialWorkerJeevikaDidiName,
+          socialWorkerJeevikaDidiPhone: validateData.data.socialWorkerJeevikaDidiPhone,
+          socialWorkerAaganBadiSevikaName: validateData.data.socialWorkerAaganBadiSevikaName,
+          socialWorkerAaganBadiSevikaPhone: validateData.data.socialWorkerAaganBadiSevikaPhone,
           declarationAccepted: validateData.data.declarationAccepted,
           registrationDate: validateData.data.registrationDate,
           registrationPlace: validateData.data.registrationPlace,

@@ -16,6 +16,7 @@ export default function ManagedUserFilters({
     { value: "Pending", label: "Pending" },
   ],
   showBloodGroup = true,
+  showLeaderManagementFilters = false,
   filters,
   onChange,
   onClear,
@@ -114,6 +115,21 @@ export default function ManagedUserFilters({
                 ))}
               </select>
             </label>
+
+            {showLeaderManagementFilters ? (
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Leader type</span>
+                <select
+                  value={filters.leaderSource}
+                  onChange={(event) => onChange("leaderSource", event.target.value)}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                >
+                  <option value="">All leaders</option>
+                  <option value="direct">Direct leaders</option>
+                  <option value="managed">Managed leaders</option>
+                </select>
+              </label>
+            ) : null}
 
             <label className="space-y-2">
               <span className="text-sm font-medium text-foreground">District</span>

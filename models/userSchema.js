@@ -150,6 +150,36 @@ const userSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    socialWorkerAshaName: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    socialWorkerAshaPhone: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    socialWorkerJeevikaDidiName: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    socialWorkerJeevikaDidiPhone: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    socialWorkerAaganBadiSevikaName: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    socialWorkerAaganBadiSevikaPhone: {
+        type: String,
+        trim: true,
+        default: ""
+    },
     registrationFeePaid: {
         type: Boolean,
         default: false

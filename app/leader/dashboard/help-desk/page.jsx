@@ -6,5 +6,5 @@ export default async function LeaderHelpDeskPage() {
   const { user } = await getCurrentUser();
   const initialProblems = user?.id ? await getLeaderHelpDeskProblems(user.id) : [];
 
-  return <LeaderHelpDeskSection initialProblems={initialProblems} />;
+  return <LeaderHelpDeskSection initialProblems={initialProblems} leader={user} />;
 }

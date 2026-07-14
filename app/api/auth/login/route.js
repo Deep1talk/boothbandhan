@@ -1,17 +1,16 @@
-import { verificationEmail } from "@/email/verificationEmail";
 import { connectDB } from "@/lib/connectDB";
 import { getLockedUserMessage } from "@/lib/authUser";
+import { sendVerificationEmailToUser } from "@/lib/emailVerification";
 import { errorResponse, successResponse } from "@/lib/helper";
 import { AUTH_COOKIE_NAME, authCookieOptions, createAuthToken } from "@/lib/session";
-import { sendMail } from "@/lib/sendMail";
 import { zodLoginSchema } from "@/lib/zodSchema";
 import UserModel from "@/models/userSchema";
-import { SignJWT } from "jose";
 
 export async function POST(req) {
     try {
         await connectDB();
         const data = await req.json();
+        const verificationBaseUrl = new URL(req.url).origin;
 
         const validateData = zodLoginSchema.safeParse(data);
         if (!validateData.success) {
@@ -40,19 +39,9 @@ export async function POST(req) {
         }
 //email verification
         if (!user.isEmailVerified) {
-            const secret = new TextEncoder().encode(process.env.SECRET_KEY);
-            const token = await new SignJWT({ userId: user._id.toString() })
-                .setIssuedAt()
-                .setExpirationTime('1h')
-                .setProtectedHeader({ alg: 'HS256' })
-                .sign(secret);
-
-            const link = {
-                name: user.name,
-                loginUrl: `${process.env.NEXT_PUBLIC_URL}/auth/verify-email/${token}`
-            };
-            const emailBody = verificationEmail({ link });
-            const mailResult = await sendMail(user.email, "Verification Email", emailBody);
+            const mailResult = await sendVerificationEmailToUser(user, {
+                baseUrl: verificationBaseUrl,
+            });
 
             if (mailResult.success) {
                 return errorResponse(400, "Your email is not verified. I sent a verification email, please verify your email first.");

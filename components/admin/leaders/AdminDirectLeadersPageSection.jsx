@@ -6,13 +6,22 @@ import AdminLeaderProblemsPanel from "@/components/admin/leaders/AdminLeaderProb
 import ManagedUserFilters from "@/components/shared/filters/ManagedUserFilters";
 import PaginationControls from "@/components/shared/filters/PaginationControls";
 import { useRemoteData } from "@/hooks/useRemoteData";
-import { getDirectLeaders, toggleManagedUserLock } from "@/lib/client/usersClient";
+import { getDirectLeaders, resendManagedUserVerificationEmail, toggleManagedUserLock } from "@/lib/client/usersClient";
 import {
   buildManagedUserFilterQueryParams,
   createManagedUserFilters,
   MANAGED_USER_PAGE_SIZE,
 } from "@/lib/managedUserFilters";
 import { toastAlert } from "@/lib/toastAlert";
+
+const ADMIN_LEADER_STATUS_OPTIONS = [
+  { value: "Active", label: "Active" },
+  { value: "Verified", label: "Verified" },
+  { value: "Locked", label: "Locked" },
+  { value: "Paid", label: "Paid" },
+  { value: "Unpaid", label: "Unpaid" },
+  { value: "Pending", label: "Pending" },
+];
 
 function formatDate(value) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -42,6 +51,7 @@ function paymentPillClass(status) {
 
 export default function AdminDirectLeadersPageSection() {
   const [lockingId, setLockingId] = useState("");
+  const [resendingLeaderId, setResendingLeaderId] = useState("");
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState(createManagedUserFilters());
   const { data, isLoading, isRefreshing, refresh } = useRemoteData(
@@ -96,6 +106,27 @@ export default function AdminDirectLeadersPageSection() {
     }
   };
 
+  const handleResendVerification = async (leader) => {
+    try {
+      setResendingLeaderId(leader.id);
+      const response = await resendManagedUserVerificationEmail(leader.id);
+      toastAlert(
+        "success",
+        response.message || `Verification email sent to ${leader.email}.`
+      );
+      await refresh();
+    } catch (error) {
+      toastAlert(
+        "error",
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to resend verification email."
+      );
+    } finally {
+      setResendingLeaderId("");
+    }
+  };
+
   return (
     <section className="space-y-4">
       <section className="rounded-[1.5rem] border border-border/60 bg-white/90 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-5">
@@ -146,6 +177,7 @@ export default function AdminDirectLeadersPageSection() {
           title="Leader filters"
           filters={filters}
           showBloodGroup={false}
+          statusOptions={ADMIN_LEADER_STATUS_OPTIONS}
           onChange={handleFilterChange}
           onClear={() => {
             setPage(1);
@@ -255,6 +287,19 @@ export default function AdminDirectLeadersPageSection() {
                       )}
                       {leader.isLocked ? "Unlock" : "Lock"}
                     </button>
+                    {!leader.isEmailVerified ? (
+                      <button
+                        type="button"
+                        onClick={() => handleResendVerification(leader)}
+                        disabled={resendingLeaderId === leader.id}
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-medium text-sky-900 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto"
+                      >
+                        {resendingLeaderId === leader.id ? (
+                          <LoaderCircle className="size-4 animate-spin" />
+                        ) : null}
+                        {resendingLeaderId === leader.id ? "Sending..." : "Resend email"}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
 

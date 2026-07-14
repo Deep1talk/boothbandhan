@@ -7,6 +7,7 @@ export async function POST(req) {
     try {
         await connectDB();
         const data = await req.json();
+        const verificationBaseUrl = new URL(req.url).origin;
 
         const validateData = zodRegisterSchema.safeParse(data);
         if (!validateData.success) {
@@ -21,6 +22,7 @@ export async function POST(req) {
             phone,
             role: "Leader",
             parentId: null,
+            verificationBaseUrl,
         });
 
         if (!result.success) {

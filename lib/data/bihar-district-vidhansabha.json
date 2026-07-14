@@ -1,284 +1,7 @@
 {
-  "Araria": [
-    "Narpatganj",
-    "Raniganj",
-    "Forbesganj",
-    "Araria",
-    "Jokihat",
-    "Sikti"
-  ],
-  "Arwal": [
-    "Arwal",
-    "Kurtha"
-  ],
-  "Aurangabad": [
-    "Kutumba",
-    "Aurangabad",
-    "Rafiganj",
-    "Gurua",
-    "Imamganj",
-    "Tikari"
-  ],
-  "Banka": [
-    "Sultanganj",
-    "Amarpur",
-    "Dhoraiya",
-    "Banka",
-    "Katoria",
-    "Belhar"
-  ],
-  "Begusarai": [
-    "Cheria Bariarpur",
-    "Bachhwara",
-    "Teghra",
-    "Matihani",
-    "Sahebpur Kamal",
-    "Begusarai",
-    "Bakhri"
-  ],
-  "Bhagalpur": [
-    "Bihpur",
-    "Gopalpur",
-    "Pirpainti",
-    "Kahalgaon",
-    "Bhagalpur",
-    "Nathnagar"
-  ],
-  "Bhojpur": [
-    "Sandesh",
-    "Barhara",
-    "Arrah",
-    "Agiaon",
-    "Tarari",
-    "Jagdishpur",
-    "Shahpur"
-  ],
-  "Buxar": [
-    "Brahampur",
-    "Buxar",
-    "Dumraon",
-    "Rajpur"
-  ],
-  "Darbhanga": [
-    "Gaura Bauram",
-    "Benipur",
-    "Alinagar",
-    "Darbhanga Rural",
-    "Darbhanga",
-    "Hayaghat",
-    "Bahadurpur",
-    "Keoti",
-    "Jale",
-    "Kusheshwar Asthan"
-  ],
-  "Gaya": [
-    "Sherghati",
-    "Barachatti",
-    "Bodh Gaya",
-    "Gaya Town",
-    "Belaganj",
-    "Atri",
-    "Wazirganj"
-  ],
-  "Jamui": [
-    "Sikandra",
-    "Jamui",
-    "Jhajha",
-    "Chakai"
-  ],
-  "Jehanabad": [
-    "Jehanabad",
-    "Ghosi",
-    "Makhdumpur"
-  ],
-  "Kaimur": [
-    "Mohania",
-    "Bhabua",
-    "Chainpur"
-  ],
-  "Katihar": [
-    "Katihar",
-    "Kadwa",
-    "Balrampur",
-    "Pranpur",
-    "Manihari",
-    "Barari",
-    "Korha"
-  ],
-  "Khagaria": [
-    "Alauli",
-    "Khagaria",
-    "Beldaur",
-    "Parbatta"
-  ],
-  "Kishanganj": [
-    "Bahadurganj",
-    "Thakurganj",
-    "Kishanganj",
-    "Kochadhaman"
-  ],
-  "Lakhisarai": [
-    "Suryagarha",
-    "Lakhisarai"
-  ],
-  "Madhepura": [
-    "Alamnagar",
-    "Bihariganj",
-    "Singheshwar",
-    "Madhepura"
-  ],
-  "Madhubani": [
-    "Harlakhi",
-    "Benipatti",
-    "Khajauli",
-    "Babubarhi",
-    "Bisfi",
-    "Madhubani",
-    "Rajnagar",
-    "Jhanjharpur",
-    "Phulparas",
-    "Laukaha"
-  ],
-  "Munger": [
-    "Munger",
-    "Jamalpur",
-    "Tarapur"
-  ],
-  "Muzaffarpur": [
-    "Gaighat",
-    "Aurai",
-    "Minapur",
-    "Bochaha",
-    "Sakra",
-    "Kurhani",
-    "Muzaffarpur",
-    "Kanti",
-    "Baruraj",
-    "Paroo",
-    "Sahebganj"
-  ],
-  "Nalanda": [
-    "Asthawan",
-    "Biharsharif",
-    "Rajgir",
-    "Islampur",
-    "Hilsa",
-    "Nalanda",
-    "Harnaut"
-  ],
-  "Nawada": [
-    "Rajauli",
-    "Hisua",
-    "Nawada",
-    "Gobindpur",
-    "Warsaliganj"
-  ],
-  "Patna": [
-    "Mokama",
-    "Barh",
-    "Bakhtiarpur",
-    "Digha",
-    "Bankipur",
-    "Kumhrar",
-    "Patna Sahib",
-    "Fatuha",
-    "Danapur",
-    "Maner",
-    "Phulwari",
-    "Masaurhi",
-    "Paliganj",
-    "Bikram"
-  ],
-  "Purnia": [
-    "Kasba",
-    "Banmankhi",
-    "Rupauli",
-    "Dhamdaha",
-    "Purnia",
-    "Amour",
-    "Baisi"
-  ],
-  "Rohtas": [
-    "Dinara",
-    "Nokha",
-    "Dehri",
-    "Karakat",
-    "Chenari",
-    "Sasaram",
-    "Kargahar"
-  ],
-  "Saharsa": [
-    "Sonbarsha",
-    "Saharsa",
-    "Simri Bakhtiarpur",
-    "Mahishi"
-  ],
-  "Samastipur": [
-    "Kalyanpur",
-    "Warisnagar",
-    "Samastipur",
-    "Ujiarpur",
-    "Morwa",
-    "Sarairanjan",
-    "Mohiuddinnagar",
-    "Bibhutipur",
-    "Rosera",
-    "Hasanpur"
-  ],
-  "Saran": [
-    "Taraiya",
-    "Marhaura",
-    "Chapra",
-    "Garkha",
-    "Amnour",
-    "Parsa",
-    "Sonepur"
-  ],
-  "Sheikhpura": [
-    "Sheikhpura",
-    "Barbigha"
-  ],
-  "Sheohar": [
-    "Sheohar"
-  ],
-  "Sitamarhi": [
-    "Bathnaha",
-    "Parihar",
-    "Sursand",
-    "Bajpatti",
-    "Sitamarhi",
-    "Runnisaidpur"
-  ],
-  "Siwan": [
-    "Siwan",
-    "Ziradei",
-    "Darauli",
-    "Raghunathpur",
-    "Daraunda",
-    "Barharia",
-    "Goriakothi",
-    "Maharajganj"
-  ],
-  "Supaul": [
-    "Nirmali",
-    "Pipra",
-    "Supaul",
-    "Triveniganj",
-    "Chhatapur"
-  ],
-  "Vaishali": [
-    "Mahua",
-    "Raja Pakar",
-    "Raghopur",
-    "Hajipur",
-    "Mahnar",
-    "Patepur",
-    "Vaishali",
-    "Lalganj"
-  ],
   "West Champaran": [
-    "Valmiki Nagar",
-    "Ramnagar",
+    "Valmikinagar",
+    "Ramnagar (SC)",
     "Narkatiaganj",
     "Bagaha",
     "Lauriya",
@@ -291,7 +14,7 @@
     "Raxaul",
     "Sugauli",
     "Narkatia",
-    "Harsidhi",
+    "Harsidhi (SC)",
     "Govindganj",
     "Kesaria",
     "Kalyanpur",
@@ -300,5 +23,299 @@
     "Motihari",
     "Chiraia",
     "Dhaka"
+  ],
+  "Sheohar": [
+    "Sheohar"
+  ],
+  "Sitamarhi": [
+    "Riga",
+    "Bathnaha (SC)",
+    "Parihar",
+    "Sursand",
+    "Bajpatti",
+    "Sitamarhi",
+    "Runnisaidpur",
+    "Belsand"
+  ],
+  "Madhubani": [
+    "Harlakhi",
+    "Benipatti",
+    "Khajauli",
+    "Babubarhi",
+    "Bisfi",
+    "Madhubani",
+    "Rajnagar (SC)",
+    "Jhanjharpur",
+    "Phulparas",
+    "Laukaha"
+  ],
+  "Supaul": [
+    "Nirmali",
+    "Pipra",
+    "Supaul",
+    "Triveniganj (SC)",
+    "Chhatapur"
+  ],
+  "Araria": [
+    "Narpatganj",
+    "Raniganj (SC)",
+    "Forbesganj",
+    "Araria",
+    "Jokihat",
+    "Sikti"
+  ],
+  "Kishanganj": [
+    "Bahadurganj",
+    "Thakurganj",
+    "Kishanganj",
+    "Kochadhaman"
+  ],
+  "Purnia": [
+    "Amour",
+    "Baisi",
+    "Kasba",
+    "Banmankhi (SC)",
+    "Rupauli",
+    "Dhamdaha",
+    "Purnia"
+  ],
+  "Katihar": [
+    "Katihar",
+    "Kadwa",
+    "Balrampur",
+    "Pranpur",
+    "Manihari (ST)",
+    "Barari",
+    "Korha (SC)"
+  ],
+  "Madhepura": [
+    "Alamnagar",
+    "Bihariganj",
+    "Singheshwar (SC)",
+    "Madhepura"
+  ],
+  "Saharsa": [
+    "Sonbarsa (SC)",
+    "Saharsa",
+    "Simri Bakhtiyarpur",
+    "Mahishi"
+  ],
+  "Darbhanga": [
+    "Kusheshwar Asthan (SC)",
+    "Gaura Bauram",
+    "Benipur",
+    "Alinagar",
+    "Darbhanga Rural",
+    "Darbhanga",
+    "Hayaghat",
+    "Bahadurpur",
+    "Keoti",
+    "Jale"
+  ],
+  "Muzaffarpur": [
+    "Gaighat",
+    "Aurai",
+    "Minapur",
+    "Bochahan (SC)",
+    "Sakra (SC)",
+    "Kurhani",
+    "Muzaffarpur",
+    "Kanti",
+    "Baruwaraj",
+    "Paroo",
+    "Sahebganj"
+  ],
+  "Gopalganj": [
+    "Baikunthpur",
+    "Barauli",
+    "Gopalganj",
+    "Kuchaikote",
+    "Bhore (SC)",
+    "Hathua"
+  ],
+  "Siwan": [
+    "Siwan",
+    "Ziradei",
+    "Darauli (SC)",
+    "Raghunathpur",
+    "Daraundha",
+    "Barharia",
+    "Goriakothi",
+    "Maharajganj"
+  ],
+  "Saran": [
+    "Ekma",
+    "Manjhi",
+    "Baniapur",
+    "Taraiya",
+    "Marhaura",
+    "Chapra",
+    "Garkha (SC)",
+    "Amnour",
+    "Parsa",
+    "Sonpur"
+  ],
+  "Vaishali": [
+    "Hajipur",
+    "Lalganj",
+    "Vaishali",
+    "Mahua",
+    "Raja Pakar (SC)",
+    "Raghopur",
+    "Mahnar",
+    "Patepur (SC)"
+  ],
+  "Samastipur": [
+    "Kalyanpur (SC)",
+    "Warisnagar",
+    "Samastipur",
+    "Ujiarpur",
+    "Morwa",
+    "Sarairanjan",
+    "Mohiuddinnagar",
+    "Vibhutipur",
+    "Rosera (SC)",
+    "Hasanpur"
+  ],
+  "Begusarai": [
+    "Cheria-Bariarpur",
+    "Bachhwara",
+    "Teghra",
+    "Matihani",
+    "Sahebpur Kamal",
+    "Begusarai",
+    "Bakhri (SC)"
+  ],
+  "Khagaria": [
+    "Alauli (SC)",
+    "Khagaria",
+    "Beldaur",
+    "Parbatta"
+  ],
+  "Bhagalpur": [
+    "Bihpur",
+    "Gopalpur",
+    "Pirpainti (SC)",
+    "Kahalgaon",
+    "Bhagalpur",
+    "Sultanganj",
+    "Nathnagar"
+  ],
+  "Banka": [
+    "Amarpur",
+    "Dhoraiya (SC)",
+    "Banka",
+    "Katoria (ST)",
+    "Belhar"
+  ],
+  "Munger": [
+    "Tarapur",
+    "Munger",
+    "Jamalpur"
+  ],
+  "Lakhisarai": [
+    "Suryagarha",
+    "Lakhisarai"
+  ],
+  "Sheikhpura": [
+    "Sheikhpura",
+    "Barbigha"
+  ],
+  "Nalanda": [
+    "Asthawan",
+    "Biharsharif",
+    "Rajgir (SC)",
+    "Islampur",
+    "Hilsa",
+    "Nalanda",
+    "Harnaut"
+  ],
+  "Patna": [
+    "Mokama",
+    "Barh",
+    "Bakhtiarpur",
+    "Digha",
+    "Bankipur",
+    "Kumhrar",
+    "Patna Sahib",
+    "Fatuha",
+    "Danapur",
+    "Maner",
+    "Phulwari (SC)",
+    "Masaurhi (SC)",
+    "Paliganj",
+    "Bikram"
+  ],
+  "Bhojpur": [
+    "Sandesh",
+    "Barhara",
+    "Ara",
+    "Agiaon (SC)",
+    "Tarari",
+    "Jagdishpur",
+    "Shahpur"
+  ],
+  "Buxar": [
+    "Brahampur",
+    "Buxar",
+    "Dumraon",
+    "Rajpur (SC)"
+  ],
+  "Kaimur (Bhabhua)": [
+    "Ramgarh",
+    "Mohania (SC)",
+    "Bhabhua",
+    "Chainpur"
+  ],
+  "Rohtas": [
+    "Chenari (SC)",
+    "Sasaram",
+    "Kargahar",
+    "Dinara",
+    "Nokha",
+    "Dehri",
+    "Karakat"
+  ],
+  "Arwal": [
+    "Arwal",
+    "Kurtha"
+  ],
+  "Jehanabad": [
+    "Jehanabad",
+    "Ghosi",
+    "Makhdumpur (SC)"
+  ],
+  "Aurangabad": [
+    "Goh",
+    "Obra",
+    "Nabinagar",
+    "Kutumba (SC)",
+    "Aurangabad",
+    "Rafiganj"
+  ],
+  "Gaya": [
+    "Gurua",
+    "Sherghati",
+    "Imamganj (SC)",
+    "Barachatti (SC)",
+    "Bodh Gaya (SC)",
+    "Gaya Town",
+    "Tikari",
+    "Belaganj",
+    "Atri",
+    "Wazirganj"
+  ],
+  "Nawada": [
+    "Rajauli (SC)",
+    "Hisua",
+    "Nawada",
+    "Govindpur",
+    "Warisaliganj"
+  ],
+  "Jamui": [
+    "Sikandra (SC)",
+    "Jamui",
+    "Jhajha",
+    "Chakai"
   ]
 }

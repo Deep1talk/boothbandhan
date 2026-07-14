@@ -28,7 +28,7 @@ export const verificationEmail = ({ link }) => {
                 Thanks for signing up. Please confirm your email address to verify your account and continue securely.
               </p>
               <p style="margin:0 0 20px; font-size:14px; line-height:22px; color:#6b7280;">
-                This verification link will expire in 1 hour.
+                This verification link will expire in 48 hours.
               </p>
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 8px;">
                 <tr>
