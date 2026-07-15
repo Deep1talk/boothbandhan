@@ -61,11 +61,12 @@ async function compressPosterPhoto(file) {
 
   render();
 
-  let quality = 0.92;
+  const mimeType = file.type === "image/png" ? "image/png" : file.type || "image/jpeg";
+  let quality = mimeType === "image/png" ? undefined : 0.92;
 
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const blob = await new Promise((resolve) => {
-      canvas.toBlob(resolve, "image/jpeg", quality);
+      canvas.toBlob(resolve, mimeType, quality);
     });
 
     if (!blob) {
@@ -73,13 +74,16 @@ async function compressPosterPhoto(file) {
     }
 
     if (blob.size <= MAX_POSTER_BYTES) {
-      return new File([blob], "leader-poster-photo.jpg", {
-        type: "image/jpeg",
+      const outputName = file.name.replace(/\.[^.]+$/, "") || "leader-poster-photo";
+      const extension = mimeType === "image/png" ? "png" : "jpg";
+
+      return new File([blob], `${outputName}.${extension}`, {
+        type: mimeType,
         lastModified: Date.now(),
       });
     }
 
-    if (quality > 0.5) {
+    if (quality && quality > 0.5) {
       quality -= 0.08;
       continue;
     }
@@ -226,6 +230,14 @@ export default function LeaderGreetingStudioSection({
       toastAlert("error", "Invalid image", "Please choose an image file.");
       event.target.value = "";
       return;
+    }
+
+    if (file.type !== "image/png") {
+      toastAlert(
+        "info",
+        "Background note",
+        "Use a transparent PNG if you want the greeting template photo to appear without background. JPG/JPEG will keep its background."
+      );
     }
 
     try {
@@ -455,6 +467,9 @@ export default function LeaderGreetingStudioSection({
                 <p className="mt-3 text-xs leading-6 text-muted-foreground">
                   Use a portrait photo with clear separation from the background. The crop controls below help position it cleanly in the poster even if background removal is not used.
                 </p>
+                <p className="mt-1 text-xs leading-6 text-muted-foreground">
+                  Upload a transparent PNG if you want the greeting template to show the profile photo without any background.
+                </p>
               </div>
             </div>
 
@@ -493,7 +508,7 @@ export default function LeaderGreetingStudioSection({
               <label className="text-sm font-medium">Photo zoom</label>
               <input
                 type="range"
-                min="0.6"
+                min="0.2"
                 max="2.5"
                 step="0.05"
                 value={profileValues.posterPhotoScale}
@@ -520,7 +535,7 @@ export default function LeaderGreetingStudioSection({
               <input
                 type="range"
                 min="-220"
-                max="220"
+                max="360"
                 step="2"
                 value={profileValues.posterPhotoOffsetY}
                 onChange={(event) => handleChange("posterPhotoOffsetY", event.target.value)}

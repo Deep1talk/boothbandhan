@@ -3,7 +3,15 @@
 import { useState } from "react";
 import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, LoaderCircle, Upload, UserRound, X } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  Mail,
+  Upload,
+  UserRound,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toastAlert } from "@/lib/toastAlert";
@@ -108,6 +116,7 @@ export default function ProfileManagementSection({ user }) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(user.avatar || DEFAULT_AVATAR);
 
   const handleFileChange = async (event) => {
@@ -251,6 +260,27 @@ export default function ProfileManagementSection({ user }) {
     }
   };
 
+  const handleResendVerification = async () => {
+    try {
+      setIsResendingVerification(true);
+      const { data: response } = await axios.post("/api/account/resend-verification");
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      toastAlert("success", "Verification email sent", response.message);
+    } catch (error) {
+      toastAlert(
+        "error",
+        "Unable to resend verification email",
+        error.response?.data?.message || error.message || "Please try again."
+      );
+    } finally {
+      setIsResendingVerification(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {user.role === "Candidate" ? <FieldAssociateIdCardPanel user={user} /> : null}
@@ -286,6 +316,13 @@ export default function ProfileManagementSection({ user }) {
               <div>
                 <p className="text-sm font-semibold text-foreground">{user.email}</p>
                 <p className="text-sm text-muted-foreground">{user.role}</p>
+                <p
+                  className={`mt-1 text-xs font-medium ${
+                    user.isEmailVerified ? "text-emerald-700" : "text-amber-700"
+                  }`}
+                >
+                  {user.isEmailVerified ? "Email verified" : "Email not verified"}
+                </p>
                 {selectedFile ? (
                   <p className="mt-1 text-xs text-emerald-700">
                     New image selected: {selectedFile.name} ({Math.max(1, Math.round(selectedFile.size / 1024))} KB)
@@ -299,6 +336,21 @@ export default function ProfileManagementSection({ user }) {
             </div>
 
             <div className="flex flex-1 flex-wrap gap-2 sm:justify-end">
+              {!user.isEmailVerified ? (
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={isResendingVerification}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-medium text-amber-800 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isResendingVerification ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    <Mail className="size-4" />
+                  )}
+                  {isResendingVerification ? "Sending..." : "Resend verification"}
+                </button>
+              ) : null}
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-medium text-foreground transition hover:bg-accent">
                 {isOptimizingAvatar ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
                 {isOptimizingAvatar ? "Optimizing..." : "Choose photo"}

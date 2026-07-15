@@ -53,12 +53,22 @@ export async function POST(req, { params }) {
       return errorResponse(400, "Email is already verified");
     }
 
+    if (!targetUser.email?.trim()) {
+      return errorResponse(400, "User does not have a valid email address");
+    }
+
     const mailResult = await sendVerificationEmailToUser(targetUser, {
       baseUrl: verificationBaseUrl,
     });
 
     if (!mailResult.success) {
-      return errorResponse(500, "Unable to send verification email");
+      const mailErrorMessage =
+        mailResult.error?.response ||
+        mailResult.error?.message ||
+        mailResult.message ||
+        "Unable to send verification email";
+
+      return errorResponse(500, mailErrorMessage);
     }
 
     return successResponse(200, `Verification email sent to ${targetUser.email}`, {

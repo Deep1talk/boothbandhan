@@ -85,6 +85,7 @@ export async function PUT(req) {
       }
 
       const uploadResult = await uploadImageToCloudinary(posterPhoto, {
+        format: posterPhoto.type === "image/png" ? "png" : undefined,
         publicId: leader.posterPhotoPublicId || `leader-poster-${leader._id.toString()}`,
         folder: "boothbandhan/poster-photos",
         overwrite: true,

@@ -6,7 +6,6 @@ import {
   DEFAULT_POSTER_CARD_COLOR,
   DEFAULT_POSTER_STRIP_COLOR,
   DEFAULT_POSTER_FONT,
-  DEFAULT_POSTER_LOGO,
   DEFAULT_POSTER_SIZE,
   DEFAULT_POSTER_CONTACT_COLOR,
   DEFAULT_POSTER_NAME_COLOR,
@@ -218,11 +217,9 @@ export default function FestivalPosterPreview({
           throw new Error("Canvas preview is not available in this browser.");
         }
 
-        const [backgroundImage, posterPhotoImage, avatarImage, logoImage] = await Promise.all([
+        const [backgroundImage, posterPhotoImage] = await Promise.all([
           loadImage(backgroundPreviewUrl || template.backgroundImage),
           loadImage(resolvedProfile.posterPhoto),
-          loadImage(resolvedProfile.avatar || resolvedProfile.posterPhoto),
-          loadImage(DEFAULT_POSTER_LOGO),
         ]);
 
         if (!isMounted) {
@@ -247,6 +244,39 @@ export default function FestivalPosterPreview({
         ctx.fillStyle = overlayGradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        const cardColor = template.cardBackgroundColor || DEFAULT_POSTER_CARD_COLOR;
+        const stripColor =
+          template.contactStripBackgroundColor || DEFAULT_POSTER_STRIP_COLOR;
+        const nameColor = template.nameTextColor || DEFAULT_POSTER_NAME_COLOR;
+        const taglineColor = template.taglineTextColor || DEFAULT_POSTER_TAGLINE_COLOR;
+        const contactColor = template.contactTextColor || DEFAULT_POSTER_CONTACT_COLOR;
+        const fontFamily = template.fontFamily || DEFAULT_POSTER_FONT;
+
+        ctx.shadowColor = "rgba(15, 23, 42, 0.12)";
+        ctx.shadowBlur = 14;
+        ctx.shadowOffsetY = 8;
+        ctx.fillStyle = cardColor;
+        ctx.fillRect(0, 1110, 760, 150);
+
+        ctx.shadowColor = "transparent";
+        ctx.fillStyle = stripColor;
+        ctx.fillRect(0, 1260, canvas.width, canvas.height - 1260);
+
+        ctx.fillStyle = nameColor;
+        ctx.font = `700 54px ${fontFamily}, sans-serif`;
+        ctx.textBaseline = "top";
+        const nameLines = wrapText(ctx, resolvedProfile.name, 660).slice(0, 2);
+        nameLines.forEach((line, index) => {
+          ctx.fillText(line, 54, 1142 + index * 54);
+        });
+
+        ctx.fillStyle = taglineColor;
+        ctx.font = `600 23px ${fontFamily}, sans-serif`;
+        const taglineLines = wrapText(ctx, resolvedProfile.greetingTagline, 660).slice(0, 2);
+        taglineLines.forEach((line, index) => {
+          ctx.fillText(line, 54, 1206 + index * 28);
+        });
+
         if (posterPhotoImage) {
           ctx.save();
           ctx.beginPath();
@@ -260,77 +290,6 @@ export default function FestivalPosterPreview({
           ctx.restore();
         }
 
-        const badgeCenterX = 126;
-        const badgeCenterY = 124;
-        const badgeRadius = 78;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(badgeCenterX, badgeCenterY, badgeRadius, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.fillStyle = template.cardBackgroundColor || DEFAULT_POSTER_CARD_COLOR;
-        ctx.fill();
-        ctx.restore();
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(badgeCenterX, badgeCenterY, badgeRadius - 10, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        drawCoverImage(ctx, avatarImage || posterPhotoImage, 38, 36, 176, 176);
-        ctx.restore();
-
-        ctx.lineWidth = 8;
-        ctx.strokeStyle = "rgba(255,255,255,0.92)";
-        ctx.beginPath();
-        ctx.arc(badgeCenterX, badgeCenterY, badgeRadius - 4, 0, Math.PI * 2);
-        ctx.stroke();
-
-        if (logoImage) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(190, 176, 30, 0, Math.PI * 2);
-          ctx.closePath();
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-          ctx.clip();
-          drawCoverImage(ctx, logoImage, 160, 146, 60, 60);
-          ctx.restore();
-        }
-
-        const cardColor = template.cardBackgroundColor || DEFAULT_POSTER_CARD_COLOR;
-        const stripColor =
-          template.contactStripBackgroundColor || DEFAULT_POSTER_STRIP_COLOR;
-        const nameColor = template.nameTextColor || DEFAULT_POSTER_NAME_COLOR;
-        const taglineColor = template.taglineTextColor || DEFAULT_POSTER_TAGLINE_COLOR;
-        const contactColor = template.contactTextColor || DEFAULT_POSTER_CONTACT_COLOR;
-        const fontFamily = template.fontFamily || DEFAULT_POSTER_FONT;
-
-        ctx.shadowColor = "rgba(15, 23, 42, 0.12)";
-        ctx.shadowBlur = 14;
-        ctx.shadowOffsetY = 8;
-        ctx.fillStyle = cardColor;
-        ctx.fillRect(0, 1072, 760, 168);
-
-        ctx.shadowColor = "transparent";
-        ctx.fillStyle = stripColor;
-        ctx.fillRect(0, 1240, canvas.width, 110);
-
-        ctx.fillStyle = nameColor;
-        ctx.font = `700 58px ${fontFamily}, sans-serif`;
-        ctx.textBaseline = "top";
-        const nameLines = wrapText(ctx, resolvedProfile.name, 660).slice(0, 2);
-        nameLines.forEach((line, index) => {
-          ctx.fillText(line, 54, 1098 + index * 60);
-        });
-
-        ctx.fillStyle = taglineColor;
-        ctx.font = `600 25px ${fontFamily}, sans-serif`;
-        const taglineLines = wrapText(ctx, resolvedProfile.greetingTagline, 660).slice(0, 2);
-        taglineLines.forEach((line, index) => {
-          ctx.fillText(line, 54, 1172 + index * 31);
-        });
-
         const contactItems = [
           { type: "phone", value: resolvedProfile.phone },
           { type: "whatsapp", value: resolvedProfile.whatsappNumber },
@@ -341,11 +300,10 @@ export default function FestivalPosterPreview({
 
         ctx.fillStyle = contactColor;
         ctx.font = `600 19px ${fontFamily}, sans-serif`;
-        const stripY = 1240;
-        const stripHeight = 110;
-        const rowCenters = contactItems.length > 3 ? [stripY + 34, stripY + 78] : [stripY + 55, stripY + 55];
+        const stripY = 1260;
+        const rowCenters = contactItems.length > 3 ? [stripY + 20, stripY + 48] : [stripY + 33, stripY + 33];
         const rowStartX = 26;
-        const rowGap = 24;
+        const rowGap = 18;
         const rowLimitX = canvas.width - 26;
         const rows = [[], []];
         let activeRow = 0;
@@ -353,7 +311,7 @@ export default function FestivalPosterPreview({
 
         contactItems.forEach((item) => {
           const textWidth = ctx.measureText(String(item.value)).width;
-          const itemWidth = Math.min(270, textWidth + 74);
+          const itemWidth = Math.min(270, textWidth + 72);
           const exceedsRow = activeWidth !== rowStartX && activeWidth + itemWidth > rowLimitX;
 
           if (exceedsRow && activeRow === 0) {
