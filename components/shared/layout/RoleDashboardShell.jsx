@@ -73,6 +73,7 @@ const DASHBOARD_TRANSLATIONS = {
       "Create Leader": "लीडर बनाएं",
       Leaders: "लीडर",
       "Help Desk": "हेल्प डेस्क",
+      "Leader Problems": "लीडर समस्याएं",
     },
   },
   en: {

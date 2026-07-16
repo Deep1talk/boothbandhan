@@ -7,6 +7,11 @@ import FestivalPosterPreview from "@/components/shared/posters/FestivalPosterPre
 import { POSTER_FONT_OPTIONS, SAMPLE_POSTER_PROFILE } from "@/lib/posters";
 import { toastAlert } from "@/lib/toastAlert";
 
+const ADMIN_SAMPLE_POSTER_PROFILE = {
+  ...SAMPLE_POSTER_PROFILE,
+  posterPhotoScale: 0.5,
+};
+
 const EMPTY_FORM = {
   title: "",
   cardBackgroundColor: "#f6c453",
@@ -198,7 +203,7 @@ export default function AdminGreetingTemplatesSection({ initialTemplates = [] })
     <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <FestivalPosterPreview
         template={previewTemplate}
-        profile={SAMPLE_POSTER_PROFILE}
+        profile={ADMIN_SAMPLE_POSTER_PROFILE}
         backgroundPreviewUrl={backgroundPreviewUrl}
       />
 
@@ -418,7 +423,7 @@ export default function AdminGreetingTemplatesSection({ initialTemplates = [] })
               >
                 <FestivalPosterPreview
                   template={template}
-                  profile={SAMPLE_POSTER_PROFILE}
+                  profile={ADMIN_SAMPLE_POSTER_PROFILE}
                   className="border-0 bg-transparent p-0 shadow-none"
                 />
                 <div className="mt-3 flex items-center justify-between gap-3">

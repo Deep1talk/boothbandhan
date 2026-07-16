@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { Camera, LoaderCircle, Trash2 } from "lucide-react";
 import FestivalPosterPreview from "@/components/shared/posters/FestivalPosterPreview";
@@ -11,6 +11,15 @@ const MAX_POSTER_DIMENSION = 1800;
 
 function createMessage(templateTitle, profileName) {
   return encodeURIComponent(`${templateTitle} greeting poster by ${profileName}`);
+}
+
+function buildImageStateSignature(templateId, values) {
+  return JSON.stringify({
+    templateId: templateId || "",
+    posterPhotoScale: Number(values?.posterPhotoScale || 1),
+    posterPhotoOffsetX: Number(values?.posterPhotoOffsetX || 0),
+    posterPhotoOffsetY: Number(values?.posterPhotoOffsetY || 0),
+  });
 }
 
 function loadImageFromFile(file) {
@@ -100,6 +109,21 @@ export default function LeaderGreetingStudioSection({
   initialProfile,
   initialTemplates = [],
 }) {
+  const initialTemplateIdRef = useRef(initialProfile?.selectedGreetingTemplateId || "");
+  const autoSaveTimerRef = useRef(null);
+  const hasHydratedAutoSaveRef = useRef(false);
+  const lastPersistedImageStateRef = useRef(
+    buildImageStateSignature(
+      initialProfile?.selectedGreetingTemplateId ||
+        initialTemplates[0]?.id ||
+        "",
+      {
+        posterPhotoScale: initialProfile?.posterPhotoScale || 1,
+        posterPhotoOffsetX: initialProfile?.posterPhotoOffsetX || 0,
+        posterPhotoOffsetY: initialProfile?.posterPhotoOffsetY || 0,
+      }
+    )
+  );
   const [savedProfile, setSavedProfile] = useState(initialProfile);
   const [templates, setTemplates] = useState(initialTemplates);
   const [profileValues, setProfileValues] = useState({
@@ -116,14 +140,62 @@ export default function LeaderGreetingStudioSection({
   });
   const [selectedPhotoFile, setSelectedPhotoFile] = useState(null);
   const [selectedPhotoPreviewUrl, setSelectedPhotoPreviewUrl] = useState("");
-  const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplates[0]?.id || "");
+  const [selectedTemplateId, setSelectedTemplateId] = useState(() => {
+    const initialTemplateId = initialProfile?.selectedGreetingTemplateId || "";
+
+    if (
+      initialTemplateId &&
+      initialTemplates.some((template) => template.id === initialTemplateId)
+    ) {
+      return initialTemplateId;
+    }
+
+    return initialTemplates[0]?.id || "";
+  });
   const [isSaving, setIsSaving] = useState(false);
+  const [isPersistingImageState, setIsPersistingImageState] = useState(false);
   const [isRemovingPhoto, setIsRemovingPhoto] = useState(false);
   const [isOptimizingPhoto, setIsOptimizingPhoto] = useState(false);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [hasLeaderChangedTemplate, setHasLeaderChangedTemplate] = useState(false);
 
-  const syncTemplates = (nextTemplates, options = {}) => {
+  const getTemplatePhotoSettings = (profile, templateId) => {
+    if (!templateId) {
+      return {
+        posterPhotoScale: Number(profile?.posterPhotoScale || 1),
+        posterPhotoOffsetX: Number(profile?.posterPhotoOffsetX || 0),
+        posterPhotoOffsetY: Number(profile?.posterPhotoOffsetY || 0),
+      };
+    }
+
+    const templateSettings = profile?.posterTemplateSettings?.[templateId];
+
+    if (templateSettings) {
+      return {
+        posterPhotoScale: Number(templateSettings.posterPhotoScale || 1),
+        posterPhotoOffsetX: Number(templateSettings.posterPhotoOffsetX || 0),
+        posterPhotoOffsetY: Number(templateSettings.posterPhotoOffsetY || 0),
+      };
+    }
+
+    return {
+      posterPhotoScale: Number(profile?.posterPhotoScale || 1),
+      posterPhotoOffsetX: Number(profile?.posterPhotoOffsetX || 0),
+      posterPhotoOffsetY: Number(profile?.posterPhotoOffsetY || 0),
+    };
+  };
+
+  const syncPhotoControlsFromTemplate = useCallback((templateId, profile = savedProfile) => {
+    const nextSettings = getTemplatePhotoSettings(profile, templateId);
+    setProfileValues((current) => ({
+      ...current,
+      posterPhotoScale: nextSettings.posterPhotoScale,
+      posterPhotoOffsetX: nextSettings.posterPhotoOffsetX,
+      posterPhotoOffsetY: nextSettings.posterPhotoOffsetY,
+    }));
+  }, [savedProfile]);
+
+  const syncTemplates = useCallback((nextTemplates, options = {}) => {
     setTemplates(nextTemplates);
     setSelectedTemplateId((current) => {
       if (!nextTemplates.length) {
@@ -131,6 +203,15 @@ export default function LeaderGreetingStudioSection({
       }
 
       if (options.preferLatest || !current) {
+        const preferredTemplateId = savedProfile?.selectedGreetingTemplateId;
+
+        if (
+          preferredTemplateId &&
+          nextTemplates.some((template) => template.id === preferredTemplateId)
+        ) {
+          return preferredTemplateId;
+        }
+
         return nextTemplates[0].id;
       }
 
@@ -138,9 +219,13 @@ export default function LeaderGreetingStudioSection({
         ? current
         : nextTemplates[0].id;
     });
-  };
+  }, [savedProfile?.selectedGreetingTemplateId]);
 
   useEffect(() => () => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
     if (selectedPhotoPreviewUrl) {
       URL.revokeObjectURL(selectedPhotoPreviewUrl);
     }
@@ -184,7 +269,7 @@ export default function LeaderGreetingStudioSection({
     return () => {
       isMounted = false;
     };
-  }, [hasLeaderChangedTemplate]);
+  }, [hasLeaderChangedTemplate, syncTemplates]);
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.id === selectedTemplateId) || null,
@@ -209,14 +294,119 @@ export default function LeaderGreetingStudioSection({
     }));
   };
 
-  const replaceSelectedPhotoFile = (file) => {
+  const replaceSelectedPhotoFile = useCallback((file) => {
     if (selectedPhotoPreviewUrl) {
       URL.revokeObjectURL(selectedPhotoPreviewUrl);
     }
 
     setSelectedPhotoFile(file);
     setSelectedPhotoPreviewUrl(file ? URL.createObjectURL(file) : "");
-  };
+  }, [selectedPhotoPreviewUrl]);
+
+  const persistGreetingProfile = useCallback(async ({
+    includePhoto = false,
+    persistImageStateOnly = false,
+    successMessage = "",
+    photoFile = null,
+  } = {}) => {
+    const formData = new FormData();
+
+    if (!persistImageStateOnly) {
+      formData.append("name", String(profileValues.name ?? ""));
+      formData.append(
+        "greetingTagline",
+        String(profileValues.greetingTagline ?? "")
+      );
+      formData.append("phone", String(profileValues.phone ?? ""));
+      formData.append(
+        "whatsappNumber",
+        String(profileValues.whatsappNumber ?? "")
+      );
+      formData.append(
+        "instagramHandle",
+        String(profileValues.instagramHandle ?? "")
+      );
+      formData.append("twitterHandle", String(profileValues.twitterHandle ?? ""));
+      formData.append(
+        "facebookHandle",
+        String(profileValues.facebookHandle ?? "")
+      );
+    }
+
+    formData.append(
+      "posterPhotoScale",
+      String(profileValues.posterPhotoScale ?? 1)
+    );
+    formData.append(
+      "posterPhotoOffsetX",
+      String(profileValues.posterPhotoOffsetX ?? 0)
+    );
+    formData.append(
+      "posterPhotoOffsetY",
+      String(profileValues.posterPhotoOffsetY ?? 0)
+    );
+    formData.append(
+      "selectedGreetingTemplateId",
+      String(selectedTemplateId || "")
+    );
+
+    if (persistImageStateOnly) {
+      formData.append("persistImageStateOnly", "true");
+    }
+
+    const fileToPersist = photoFile || selectedPhotoFile;
+
+    if (includePhoto && fileToPersist) {
+      formData.append("posterPhoto", fileToPersist);
+    }
+
+    const { data: response } = await axios.put("/api/greeting-profile", formData);
+    const nextSavedProfile = response?.data?.profile;
+
+    if (!nextSavedProfile) {
+      throw new Error(response?.message || "Profile save failed.");
+    }
+
+    setSavedProfile(nextSavedProfile);
+    lastPersistedImageStateRef.current = buildImageStateSignature(
+      selectedTemplateId,
+      getTemplatePhotoSettings(nextSavedProfile, selectedTemplateId)
+    );
+    setProfileValues((current) => ({
+      ...current,
+      name: persistImageStateOnly ? current.name : nextSavedProfile.name || "",
+      greetingTagline: persistImageStateOnly
+        ? current.greetingTagline
+        : nextSavedProfile.greetingTagline || "",
+      phone: persistImageStateOnly ? current.phone : nextSavedProfile.phone || "",
+      whatsappNumber: persistImageStateOnly
+        ? current.whatsappNumber
+        : nextSavedProfile.whatsappNumber || "",
+      instagramHandle: persistImageStateOnly
+        ? current.instagramHandle
+        : nextSavedProfile.instagramHandle || "",
+      twitterHandle: persistImageStateOnly
+        ? current.twitterHandle
+        : nextSavedProfile.twitterHandle || "",
+      facebookHandle: persistImageStateOnly
+        ? current.facebookHandle
+        : nextSavedProfile.facebookHandle || "",
+      ...getTemplatePhotoSettings(nextSavedProfile, selectedTemplateId),
+    }));
+
+    if (includePhoto) {
+      replaceSelectedPhotoFile(null);
+    }
+
+    if (successMessage) {
+      toastAlert("success", successMessage, response.message);
+    }
+  }, [
+    profileValues,
+    replaceSelectedPhotoFile,
+    selectedPhotoFile,
+    selectedTemplateId,
+  ]);
 
   const handlePhotoChange = async (event) => {
     const file = event.target.files?.[0] || null;
@@ -244,7 +434,13 @@ export default function LeaderGreetingStudioSection({
       setIsOptimizingPhoto(true);
       const optimizedFile = await compressPosterPhoto(file);
       replaceSelectedPhotoFile(optimizedFile);
-      toastAlert("success", "Photo ready", "Poster photo optimized successfully.");
+      setIsPersistingImageState(true);
+      await persistGreetingProfile({
+        includePhoto: true,
+        persistImageStateOnly: true,
+        successMessage: "Photo saved",
+        photoFile: optimizedFile,
+      });
     } catch (error) {
       replaceSelectedPhotoFile(null);
       toastAlert(
@@ -253,6 +449,7 @@ export default function LeaderGreetingStudioSection({
         error.message || "Please choose a smaller image."
       );
     } finally {
+      setIsPersistingImageState(false);
       setIsOptimizingPhoto(false);
     }
   };
@@ -262,38 +459,10 @@ export default function LeaderGreetingStudioSection({
 
     try {
       setIsSaving(true);
-      const formData = new FormData();
-
-      Object.entries(profileValues).forEach(([key, value]) => {
-        formData.append(key, String(value ?? ""));
+      await persistGreetingProfile({
+        includePhoto: true,
+        successMessage: "Greeting profile saved",
       });
-
-      if (selectedPhotoFile) {
-        formData.append("posterPhoto", selectedPhotoFile);
-      }
-
-      const { data: response } = await axios.put("/api/greeting-profile", formData);
-      const savedProfile = response?.data?.profile;
-
-      if (!savedProfile) {
-        throw new Error(response?.message || "Profile save failed.");
-      }
-
-      setProfileValues({
-        name: savedProfile.name || "",
-        greetingTagline: savedProfile.greetingTagline || "",
-        phone: savedProfile.phone || "",
-        whatsappNumber: savedProfile.whatsappNumber || "",
-        instagramHandle: savedProfile.instagramHandle || "",
-        twitterHandle: savedProfile.twitterHandle || "",
-        facebookHandle: savedProfile.facebookHandle || "",
-        posterPhotoScale: Number(savedProfile.posterPhotoScale || 1),
-        posterPhotoOffsetX: Number(savedProfile.posterPhotoOffsetX || 0),
-        posterPhotoOffsetY: Number(savedProfile.posterPhotoOffsetY || 0),
-      });
-      setSavedProfile(savedProfile);
-      replaceSelectedPhotoFile(null);
-      toastAlert("success", "Greeting profile saved", response.message);
     } catch (error) {
       toastAlert(
         "error",
@@ -314,6 +483,7 @@ export default function LeaderGreetingStudioSection({
       replaceSelectedPhotoFile(null);
       if (savedProfile) {
         setSavedProfile(savedProfile);
+        syncPhotoControlsFromTemplate(selectedTemplateId, savedProfile);
       }
       toastAlert("success", "Greeting photo removed", response.message);
     } catch (error) {
@@ -326,6 +496,83 @@ export default function LeaderGreetingStudioSection({
       setIsRemovingPhoto(false);
     }
   };
+
+  useEffect(() => {
+    if (!selectedTemplateId) {
+      return;
+    }
+
+    if (
+      !hasLeaderChangedTemplate &&
+      initialTemplateIdRef.current &&
+      selectedTemplateId === initialTemplateIdRef.current
+    ) {
+      syncPhotoControlsFromTemplate(selectedTemplateId, savedProfile);
+      return;
+    }
+
+    syncPhotoControlsFromTemplate(selectedTemplateId, savedProfile);
+  }, [
+    hasLeaderChangedTemplate,
+    savedProfile,
+    selectedTemplateId,
+    syncPhotoControlsFromTemplate,
+  ]);
+
+  useEffect(() => {
+    if (!selectedTemplateId) {
+      return;
+    }
+
+    const currentImageStateSignature = buildImageStateSignature(selectedTemplateId, {
+      posterPhotoScale: profileValues.posterPhotoScale,
+      posterPhotoOffsetX: profileValues.posterPhotoOffsetX,
+      posterPhotoOffsetY: profileValues.posterPhotoOffsetY,
+    });
+
+    if (!hasHydratedAutoSaveRef.current) {
+      hasHydratedAutoSaveRef.current = true;
+      lastPersistedImageStateRef.current = currentImageStateSignature;
+      return;
+    }
+
+    if (currentImageStateSignature === lastPersistedImageStateRef.current) {
+      return;
+    }
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        setIsPersistingImageState(true);
+        await persistGreetingProfile({
+          persistImageStateOnly: true,
+        });
+      } catch (error) {
+        toastAlert(
+          "error",
+          "Unable to save photo adjustments",
+          error.response?.data?.message || error.message || "Please try again."
+        );
+      } finally {
+        setIsPersistingImageState(false);
+      }
+    }, 450);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [
+    persistGreetingProfile,
+    profileValues.posterPhotoOffsetX,
+    profileValues.posterPhotoOffsetY,
+    profileValues.posterPhotoScale,
+    selectedTemplateId,
+  ]);
 
   const shareMessage = createMessage(selectedTemplate?.title || "Festival greeting", profileValues.name || "Leader");
 
@@ -500,6 +747,11 @@ export default function LeaderGreetingStudioSection({
               {isLoadingTemplates ? (
                 <p className="text-xs text-muted-foreground">
                   Loading live templates...
+                </p>
+              ) : null}
+              {isPersistingImageState ? (
+                <p className="text-xs text-muted-foreground">
+                  Saving image adjustments...
                 </p>
               ) : null}
             </div>

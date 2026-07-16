@@ -15,6 +15,7 @@ export default function ManagedUserFilters({
     { value: "Active", label: "Active" },
     { value: "Pending", label: "Pending" },
   ],
+  showStatus = true,
   showBloodGroup = true,
   showLeaderManagementFilters = false,
   filters,
@@ -100,21 +101,23 @@ export default function ManagedUserFilters({
               </div>
             </div>
 
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">Status</span>
-              <select
-                value={filters.status}
-                onChange={(event) => onChange("status", event.target.value)}
-                className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
-              >
-                <option value="">All status</option>
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {showStatus ? (
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Status</span>
+                <select
+                  value={filters.status}
+                  onChange={(event) => onChange("status", event.target.value)}
+                  className="flex h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+                >
+                  <option value="">All status</option>
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
 
             {showLeaderManagementFilters ? (
               <label className="space-y-2">

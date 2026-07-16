@@ -1,6 +1,24 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
+const posterTemplateSettingSchema = new mongoose.Schema(
+    {
+        posterPhotoScale: {
+            type: Number,
+            default: 1
+        },
+        posterPhotoOffsetX: {
+            type: Number,
+            default: 0
+        },
+        posterPhotoOffsetY: {
+            type: Number,
+            default: 0
+        }
+    },
+    { _id: false }
+);
+
 const userSchema = new mongoose.Schema({
     role: {
         type: String,
@@ -287,6 +305,16 @@ const userSchema = new mongoose.Schema({
     posterPhotoOffsetY: {
         type: Number,
         default: 0
+    },
+    selectedGreetingTemplateId: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    posterTemplateSettings: {
+        type: Map,
+        of: posterTemplateSettingSchema,
+        default: () => new Map()
     },
     deletedAt: {
         type: Date,

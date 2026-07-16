@@ -7,6 +7,7 @@ import {
   ADMIN_GALLERY,
   ADMIN_GREETING_TEMPLATES,
   ADMIN_LEADERS,
+  ADMIN_LEADER_PROBLEMS,
   ADMIN_PROFILE,
 } from "@/routes/adminpanelRoutes";
 
@@ -22,6 +23,7 @@ export default function AdminDashboardLayoutShell({ session, children }) {
         { label: "Create Field Associate", href: ADMIN_CREATE_CANDIDATE, icon: "add" },
         { label: "Field Associates", href: ADMIN_CANDIDATES, icon: "list" },
         { label: "Leaders", href: ADMIN_LEADERS, icon: "user" },
+        { label: "Leader Problems", href: ADMIN_LEADER_PROBLEMS, icon: "helpDesk" },
         { label: "Greeting Templates", href: ADMIN_GREETING_TEMPLATES, icon: "poster" },
         { label: "Gallery", href: ADMIN_GALLERY, icon: "gallery" },
         { label: "Announcements", href: ADMIN_ANNOUNCEMENTS, icon: "bell" },
@@ -31,6 +33,7 @@ export default function AdminDashboardLayoutShell({ session, children }) {
         { label: "Create Field Associate", href: ADMIN_CREATE_CANDIDATE, icon: "add" },
         { label: "Field Associates", href: ADMIN_CANDIDATES, icon: "list" },
         { label: "Leaders", href: ADMIN_LEADERS, icon: "user" },
+        { label: "Leader Problems", href: ADMIN_LEADER_PROBLEMS, icon: "helpDesk" },
       ]}
       sidePanel={[]}
       accent={{

@@ -1,5 +1,6 @@
 import { errorResponse, successResponse } from "@/lib/helper";
-import { getLeaderHelpDeskProblems } from "@/lib/helpDesk";
+import { getLeaderHelpDeskProblemsPage } from "@/lib/helpDesk";
+import { parseManagedUserListParams } from "@/lib/managedUserFilters";
 import { requireRequestUser } from "@/lib/server/requestUser";
 import { findAdminManagedUser } from "@/lib/users/queries";
 
@@ -18,10 +19,11 @@ export async function GET(req, { params }) {
       return errorResponse(404, "Leader not found");
     }
 
-    const problems = await getLeaderHelpDeskProblems(leaderId);
+    const options = parseManagedUserListParams(req.nextUrl.searchParams);
+    const data = await getLeaderHelpDeskProblemsPage(leaderId, options);
 
     return successResponse(200, "Leader problems fetched successfully", {
-      problems,
+      ...data,
     });
   } catch (error) {
     return errorResponse(500, error?.message || "Unable to fetch leader problems");

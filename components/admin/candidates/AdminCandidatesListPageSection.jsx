@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import AdminCandidatesListSection from "@/components/admin/candidates/AdminCandidatesListSection";
 import { useRemoteData } from "@/hooks/useRemoteData";
 import {
   buildManagedUserFilterQueryParams,
+  buildManagedUserQueryParams,
   createManagedUserFilters,
   MANAGED_USER_PAGE_SIZE,
+  parseManagedUserListParams,
 } from "@/lib/managedUserFilters";
 import {
   deleteManagedUser,
@@ -18,11 +21,28 @@ import { showConfirmAlert } from "@/lib/sweetAlert";
 import { toastAlert } from "@/lib/toastAlert";
 
 export default function AdminCandidatesListPageSection() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [deletingId, setDeletingId] = useState("");
   const [lockingId, setLockingId] = useState("");
   const [resendingId, setResendingId] = useState("");
-  const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState(createManagedUserFilters());
+  const { page, filters } = useMemo(
+    () => parseManagedUserListParams(searchParams),
+    [searchParams]
+  );
+
+  const navigateWithParams = (nextPage, nextFilters) => {
+    const query = buildManagedUserQueryParams({
+      page: nextPage,
+      pageSize: MANAGED_USER_PAGE_SIZE,
+      filters: nextFilters,
+    }).toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  };
+
   const { data, isLoading, isRefreshing, refresh } = useRemoteData(
     () =>
       getCandidates({
@@ -51,23 +71,40 @@ export default function AdminCandidatesListPageSection() {
           error.response?.data?.message || error.message || "Unable to load candidates."
         );
       },
-      dependencyKey: JSON.stringify({ page, filters }),
+      dependencyKey: searchParams.toString(),
     }
   );
 
   const handleFilterChange = (key, value) => {
-    setPage(1);
-    setFilters((current) => ({
-      ...current,
+    const nextFilters = {
+      ...filters,
       [key]: value,
       ...(key === "district" ? { vidhansabha: "" } : null),
-    }));
+    };
+    navigateWithParams(1, nextFilters);
   };
 
   const handleClearFilters = () => {
-    setPage(1);
-    setFilters(createManagedUserFilters());
+    const hasAnyFilter = Object.values(filters).some((item) => item);
+
+    if (!hasAnyFilter && page === 1) {
+      return;
+    }
+
+    router.replace(pathname, {
+      scroll: false,
+    });
   };
+
+  const handlePageChange = (nextPage) => {
+    navigateWithParams(nextPage, filters);
+  };
+
+  const exportHref = useMemo(
+    () =>
+      `/api/users/candidates/export?${buildManagedUserFilterQueryParams(filters).toString()}`,
+    [filters]
+  );
 
   const handleToggleLock = async (managedUser) => {
     try {
@@ -150,7 +187,7 @@ export default function AdminCandidatesListPageSection() {
     <AdminCandidatesListSection
       candidates={data.candidates ?? []}
       pagination={data.pagination}
-      exportHref={`/api/users/candidates/export?${buildManagedUserFilterQueryParams(filters).toString()}`}
+      exportHref={exportHref}
       isLoading={isLoading}
       isRefreshing={isRefreshing}
       deletingId={deletingId}
@@ -159,7 +196,7 @@ export default function AdminCandidatesListPageSection() {
       filters={filters}
       onFilterChange={handleFilterChange}
       onClearFilters={handleClearFilters}
-      onPageChange={setPage}
+      onPageChange={handlePageChange}
       onRefresh={refresh}
       onToggleLock={handleToggleLock}
       onResendVerification={handleResendVerification}
